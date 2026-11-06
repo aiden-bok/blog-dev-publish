@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" role="img" aria-labelledby="diagram-title diagram-desc">
+  <title id="diagram-title">n8n 포트를 127.0.0.1에만 열고 프록시만 노출하는 구성</title>
+  <desc id="diagram-desc">인터넷의 요청이 ufw로 허용한 80, 443 포트의 리버스 프록시를 거쳐 127.0.0.1:5678에 묶인 n8n 컨테이너로 전달되고, 5678 포트로 직접 들어오는 요청은 막힙니다</desc>
+  <defs>
+    <filter id="card-shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.12" />
+    </filter>
+    <marker id="arrow" viewBox="0 0 14 14" refX="12" refY="7" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M7 2 L12 7 L7 12" fill="none" stroke="#475569" stroke-width="2.5" stroke-linejoin="miter" stroke-linecap="butt" />
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 14 14" refX="12" refY="7" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M7 2 L12 7 L7 12" fill="none" stroke="#e11d48" stroke-width="2.5" stroke-linejoin="miter" stroke-linecap="butt" />
+    </marker>
+  </defs>
+  <rect width="1200" height="560" rx="24" fill="#f8fafc" />
+  <rect x="1" y="1" width="1198" height="558" rx="24" fill="none" stroke="#e2e8f0" stroke-width="2" />
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <text x="64" y="84" font-size="34" font-weight="800" fill="#0f172a">서버로 들어오는 길은 80, 443 하나뿐</text>
+    <text x="64" y="124" font-size="24" font-weight="500" fill="#64748b">n8n 컨테이너는 서버 안쪽 127.0.0.1에만 열려 있습니다</text>
+
+    <!-- 서버 영역 -->
+    <rect x="400" y="160" width="736" height="304" rx="20" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="2" />
+    <text x="424" y="198" font-size="22" font-weight="700" fill="#047857">서버 (ufw: SSH, 80, 443 허용)</text>
+
+    <g filter="url(#card-shadow)">
+      <rect x="64" y="256" width="240" height="120" rx="18" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" />
+      <rect x="440" y="256" width="272" height="120" rx="18" fill="#ffffff" stroke="#ddd6fe" stroke-width="2" />
+      <rect x="840" y="256" width="272" height="120" rx="18" fill="#ffffff" stroke="#a7f3d0" stroke-width="2" />
+    </g>
+
+    <text x="184" y="308" font-size="28" font-weight="700" fill="#0f172a" text-anchor="middle">인터넷</text>
+    <text x="184" y="346" font-size="22" fill="#475569" text-anchor="middle">브라우저, webhook</text>
+
+    <circle cx="480" cy="296" r="18" fill="#7c3aed" />
+    <text x="480" y="304" font-size="22" font-weight="800" fill="#ffffff" text-anchor="middle">1</text>
+    <text x="576" y="338" font-size="28" font-weight="700" fill="#2e1065" text-anchor="middle">리버스 프록시</text>
+    <text x="576" y="364" font-size="22" font-weight="500" fill="#5b21b6" text-anchor="middle">:80 :443</text>
+
+    <circle cx="880" cy="296" r="18" fill="#059669" />
+    <text x="880" y="304" font-size="22" font-weight="800" fill="#ffffff" text-anchor="middle">2</text>
+    <text x="976" y="338" font-size="28" font-weight="700" fill="#064e3b" text-anchor="middle">n8n 컨테이너</text>
+    <text x="976" y="364" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="22" fill="#047857" text-anchor="middle">127.0.0.1:5678</text>
+
+    <g stroke="#475569" stroke-width="2.5" stroke-linecap="butt" fill="none" marker-end="url(#arrow)">
+      <line x1="308" y1="316" x2="434" y2="316" />
+      <line x1="716" y1="316" x2="834" y2="316" />
+    </g>
+
+    <!-- 직접 접속 차단 -->
+    <path d="M184 380 V500 H976 V412" fill="none" stroke="#e11d48" stroke-width="2.5" stroke-linejoin="miter" stroke-linecap="butt" />
+    <path d="M962 398 L990 426 M990 398 L962 426" fill="none" stroke="#e11d48" stroke-width="4" stroke-linecap="butt" />
+    <rect x="504" y="480" width="368" height="40" rx="20" fill="#fff1f2" stroke="#fda4af" stroke-width="2" />
+    <text x="688" y="508" font-size="22" font-weight="700" fill="#be123c" text-anchor="middle">:5678 직접 접속은 닫힘</text>
+  </g>
+</svg>

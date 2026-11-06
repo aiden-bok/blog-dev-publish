@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Node.js on 휘발성 메모리 백업소</title><link>https://dev.route50.kr/tags/node.js/</link><description>Recent content in Node.js on 휘발성 메모리 백업소</description><image><title>휘발성 메모리 백업소</title><url>https://dev.route50.kr/about/cover.jpg</url><link>https://dev.route50.kr/about/cover.jpg</link></image><generator>Hugo</generator><language>ko-kr</language><lastBuildDate>Thu, 05 Nov 2026 10:30:22 +0900</lastBuildDate><atom:link href="https://dev.route50.kr/tags/node.js/index.xml" rel="self" type="application/rss+xml"/><item><title>2. AWS SES SMTP와 SDK로 메일 발송하기</title><link>https://dev.route50.kr/posts/aws-ses-send-email-2/</link><pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate><guid>https://dev.route50.kr/posts/aws-ses-send-email-2/</guid><description>AWS SES로 메일을 보내는 두 방법인 SMTP 인터페이스와 API를 비교하고, SMTP 자격 증명 발급, Nodemailer 연동, AWS SDK for JavaScript v3의 SendEmailCommand 코드를 정리했습니다.</description><content:encoded><![CDATA[<p>SES로 메일을 보내는 방법은 <a href="#term-smtp">SMTP</a>(Simple Mail Transfer Protocol: 간이 메일 전송 규약) 인터페이스와 API 두 가지입니다. 기존 코드나 메일 라이브러리를 그대로 쓰고 싶으면 SMTP, 새로 만드는 서버 코드라면 AWS <a href="#term-sdk">SDK</a>(Software Development Kit: 소프트웨어 개발 키트)로 API를 호출하는 쪽이 설정이 단순합니다. 도메인 인증과 샌드박스 해제가 끝났다는 전제로 쓴 글이며, 앞 단계는 <a href="https://dev.route50.kr/posts/aws-ses-send-email-1/">1. AWS SES 도메인 인증, DKIM, SPF, 샌드박스 해제</a>에 있습니다.</p>
+<p>이 글의 코드는 Node.js 24에서 쓰도록 작성했습니다. 작성 환경에는 AWS 계정과 자격 증명이 없어서 실제로 발송해 보지 못했으므로, 실행 결과는 싣지 않았습니다. 도메인과 주소는 모두 <code>example.com</code> 같은 예시 값입니다.</p>
+<figure>
+    <img loading="lazy" src="send-paths.svg"
+         alt="애플리케이션이 SMTP 587 포트 또는 SDK의 HTTPS 호출로 SES에 도달하는 두 경로와 각 경로의 자격 증명 종류"/> <figcaption>
+            <p>그림 1. SES 발송 경로 두 가지 (직접 제작)</p>
+        </figcaption>
+</figure>
+
+<h2 id="smtp와-api-중-무엇을-고를까">SMTP와 API 중 무엇을 고를까</h2>
+<p>두 방법은 인증 정보가 서로 다릅니다. SMTP는 SES 전용 SMTP 사용자 이름과 비밀번호를 쓰고, 이 비밀번호는 AWS 비밀 액세스 키와 같지 않습니다. (<a href="https://docs.aws.amazon.com/ses/latest/dg/smtp-credentials.html">Obtaining Amazon SES SMTP credentials</a>) API는 SDK가 AWS 자격 증명으로 요청을 서명해 주고, 재시도와 오류 처리도 SDK가 맡습니다. (<a href="https://docs.aws.amazon.com/ses/latest/dg/send-email-api.html">Using the Amazon SES API to send email</a>)</p>
+<h2 id="smtp로-보내기">SMTP로 보내기</h2>
+<p>SMTP로 보내려면 엔드포인트 주소, 포트, SMTP 자격 증명이 필요합니다. 서울 리전의 엔드포인트는 <code>email-smtp.ap-northeast-2.amazonaws.com</code>입니다. (<a href="https://docs.aws.amazon.com/general/latest/gr/ses.html">Amazon SES endpoints and quotas</a>) 연결은 반드시 <a href="#term-tls">TLS</a>(Transport Layer Security: 전송 계층 보안)로 암호화해야 합니다. 25, 587, 2587 포트는 <a href="#term-starttls">STARTTLS</a>로 연결을 올리고, 465와 2465 포트는 처음부터 TLS로 연결합니다. (<a href="https://docs.aws.amazon.com/ses/latest/dg/smtp-connect.html">Connecting to an Amazon SES SMTP endpoint</a>) EC2에서는 기본으로 25번 포트 트래픽을 제한하므로 587을 쓰는 편이 안전합니다.</p>
+<p>SMTP 자격 증명은 SES 콘솔의 SMTP settings에서 Create SMTP credentials를 눌러 만듭니다. 그러면 IAM 콘솔이 열리고 SMTP 전용 사용자가 만들어지며, 비밀번호는 이 화면을 닫으면 다시 볼 수 없으니 바로 저장해야 합니다. 자격 증명은 리전마다 따로이고, 이 사용자에게는 <code>ses:SendRawEmail</code> 권한이 필요합니다. (<a href="https://docs.aws.amazon.com/ses/latest/dg/smtp-credentials.html">Obtaining Amazon SES SMTP credentials</a>)</p>
+<p>Node.js에서는 <a href="https://nodemailer.com/">Nodemailer</a>로 연결하는 방식이 흔합니다. 아래 코드는 587 포트에서 STARTTLS를 쓰는 설정입니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#ff7b72">import</span> nodemailer from <span style="color:#a5d6ff">&#34;nodemailer&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">const</span> transporter <span style="color:#ff7b72;font-weight:bold">=</span> nodemailer.createTransport({
+</span></span><span style="display:flex;"><span>  host<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;email-smtp.ap-northeast-2.amazonaws.com&#34;</span>,
+</span></span><span style="display:flex;"><span>  port<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">587</span>,
+</span></span><span style="display:flex;"><span>  secure<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#79c0ff">false</span>, <span style="color:#8b949e;font-style:italic">// 587은 연결 후 STARTTLS로 올립니다. 465를 쓸 때만 true
+</span></span></span><span style="display:flex;"><span>  auth<span style="color:#ff7b72;font-weight:bold">:</span> {
+</span></span><span style="display:flex;"><span>    user<span style="color:#ff7b72;font-weight:bold">:</span> process.env.SES_SMTP_USER,
+</span></span><span style="display:flex;"><span>    pass<span style="color:#ff7b72;font-weight:bold">:</span> process.env.SES_SMTP_PASSWORD,
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>});
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">const</span> info <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#ff7b72">await</span> transporter.sendMail({
+</span></span><span style="display:flex;"><span>  from<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#39;&#34;Example&#34; &lt;no-reply@example.com&gt;&#39;</span>,
+</span></span><span style="display:flex;"><span>  to<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;recipient@example.com&#34;</span>,
+</span></span><span style="display:flex;"><span>  subject<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;SES SMTP 테스트&#34;</span>,
+</span></span><span style="display:flex;"><span>  text<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;SMTP로 보낸 본문입니다.&#34;</span>,
+</span></span><span style="display:flex;"><span>  html<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;&lt;p&gt;SMTP로 보낸 본문입니다.&lt;/p&gt;&#34;</span>,
+</span></span><span style="display:flex;"><span>});
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>console.log(info.messageId);
+</span></span></code></pre></div><p>사용자 이름과 비밀번호는 코드에 적지 않고 환경 변수나 <a href="https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html">AWS Secrets Manager</a>에서 읽습니다. 공식 SMTP 예제도 정적 자격 증명을 권하지 않는다고 경고합니다. (<a href="https://docs.aws.amazon.com/ses/latest/dg/send-using-smtp-programmatically.html">Sending emails programmatically through the Amazon SES SMTP interface</a>) <code>from</code> 주소는 인증한 도메인에 속해야 하고, 샌드박스 상태라면 받는 주소도 인증한 주소여야 합니다.</p>
+<h2 id="aws-sdk-for-javascript-v3로-보내기">AWS SDK for JavaScript v3로 보내기</h2>
+<p>SES API v2는 <code>@aws-sdk/client-sesv2</code> 패키지의 <code>SendEmailCommand</code>로 호출합니다. 확인 시점의 최신 버전은 3.1162.0이고 Node.js 20 이상이 필요합니다. (<a href="https://registry.npmjs.org/@aws-sdk/client-sesv2/latest">npm registry</a>) 설치는 <code>npm install @aws-sdk/client-sesv2</code>입니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#ff7b72">import</span> { SESv2Client, SendEmailCommand } from <span style="color:#a5d6ff">&#34;@aws-sdk/client-sesv2&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// 자격 증명은 SDK 기본 체인(환경 변수, 공유 설정 파일, IAM 역할)에서 읽습니다.
+</span></span></span><span style="display:flex;"><span><span style="color:#ff7b72">const</span> client <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#ff7b72">new</span> SESv2Client({ region<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;ap-northeast-2&#34;</span> });
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">const</span> command <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#ff7b72">new</span> SendEmailCommand({
+</span></span><span style="display:flex;"><span>  FromEmailAddress<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;no-reply@example.com&#34;</span>,
+</span></span><span style="display:flex;"><span>  Destination<span style="color:#ff7b72;font-weight:bold">:</span> { ToAddresses<span style="color:#ff7b72;font-weight:bold">:</span> [<span style="color:#a5d6ff">&#34;recipient@example.com&#34;</span>] },
+</span></span><span style="display:flex;"><span>  Content<span style="color:#ff7b72;font-weight:bold">:</span> {
+</span></span><span style="display:flex;"><span>    Simple<span style="color:#ff7b72;font-weight:bold">:</span> {
+</span></span><span style="display:flex;"><span>      Subject<span style="color:#ff7b72;font-weight:bold">:</span> { Data<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;SES SDK 테스트&#34;</span>, Charset<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;UTF-8&#34;</span> },
+</span></span><span style="display:flex;"><span>      Body<span style="color:#ff7b72;font-weight:bold">:</span> {
+</span></span><span style="display:flex;"><span>        Text<span style="color:#ff7b72;font-weight:bold">:</span> { Data<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;SDK로 보낸 본문입니다.&#34;</span>, Charset<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;UTF-8&#34;</span> },
+</span></span><span style="display:flex;"><span>        Html<span style="color:#ff7b72;font-weight:bold">:</span> { Data<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;&lt;p&gt;SDK로 보낸 본문입니다.&lt;/p&gt;&#34;</span>, Charset<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;UTF-8&#34;</span> },
+</span></span><span style="display:flex;"><span>      },
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>});
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">const</span> response <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#ff7b72">await</span> client.send(command);
+</span></span><span style="display:flex;"><span>console.log(response.MessageId);
+</span></span></code></pre></div><p><code>Simple</code>은 SES가 MIME 메시지를 대신 조립해 주는 방식입니다. 첨부 파일이나 헤더를 직접 다루려면 <code>Raw</code>를, 템플릿에 값을 채워 보내려면 <code>Template</code>을 씁니다. (<a href="https://docs.aws.amazon.com/ses/latest/dg/send-email-api.html">Using the Amazon SES API to send email</a>) 코드 구조는 SDK 문서 기준으로 작성했고, 실제 호출은 확인하지 못했습니다.</p>
+<p>실행하는 IAM 사용자나 역할에는 <code>ses:SendEmail</code> 권한이 필요하며, <code>Resource</code>를 인증한 자격 증명의 ARN으로 좁힐 수 있습니다. (<a href="https://docs.aws.amazon.com/ses/latest/dg/control-user-access.html">Identity and access management in Amazon SES</a>) EC2나 Lambda에서는 액세스 키를 만들지 않고 IAM 역할을 붙이는 방식이 키 유출 위험이 적습니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#7ee787">&#34;Version&#34;</span>: <span style="color:#a5d6ff">&#34;2012-10-17&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#7ee787">&#34;Statement&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#7ee787">&#34;Effect&#34;</span>: <span style="color:#a5d6ff">&#34;Allow&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#7ee787">&#34;Action&#34;</span>: <span style="color:#a5d6ff">&#34;ses:SendEmail&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#7ee787">&#34;Resource&#34;</span>: <span style="color:#a5d6ff">&#34;arn:aws:ses:ap-northeast-2:123456789012:identity/example.com&#34;</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="발송이-실패할-때-확인할-것">발송이 실패할 때 확인할 것</h2>
+<p>샌드박스에서 인증하지 않은 주소로 보내면 거부되므로, 먼저 받는 주소를 인증했는지 봅니다. 리전이 다르면 자격 증명이 없는 것으로 처리되므로 코드의 <code>region</code>과 콘솔 리전이 같은지도 확인합니다. SMTP에서는 인증 실패가 흔한데, AWS 액세스 키를 SMTP 비밀번호로 잘못 넣은 경우가 대부분입니다. 메일이 들어갔는데 스팸함에 있다면 1편의 DKIM과 MAIL FROM 상태가 Successful인지 먼저 봅니다. 시험 발송에는 SES 메일박스 시뮬레이터 주소를 쓰면 발송 한도와 반송률에 반영되지 않습니다. (<a href="https://docs.aws.amazon.com/ses/latest/dg/send-using-smtp-programmatically.html">Sending emails programmatically through the Amazon SES SMTP interface</a>)</p>
+<h2 id="참고-자료">참고 자료</h2>
+<ul>
+<li><a href="https://docs.aws.amazon.com/ses/latest/dg/send-email-smtp.html">Using the Amazon SES SMTP interface to send email</a>, Amazon SES Developer Guide, 2026-11-05 확인</li>
+<li><a href="https://docs.aws.amazon.com/ses/latest/dg/smtp-connect.html">Connecting to an Amazon SES SMTP endpoint</a>, Amazon SES Developer Guide, 2026-11-05 확인</li>
+<li><a href="https://docs.aws.amazon.com/ses/latest/dg/smtp-credentials.html">Obtaining Amazon SES SMTP credentials</a>, Amazon SES Developer Guide, 2026-11-05 확인</li>
+<li><a href="https://docs.aws.amazon.com/ses/latest/dg/send-using-smtp-programmatically.html">Sending emails programmatically through the Amazon SES SMTP interface</a>, Amazon SES Developer Guide, 2026-11-05 확인</li>
+<li><a href="https://docs.aws.amazon.com/ses/latest/dg/send-email-api.html">Using the Amazon SES API to send email</a>, Amazon SES Developer Guide, 2026-11-05 확인</li>
+<li><a href="https://docs.aws.amazon.com/ses/latest/dg/control-user-access.html">Identity and access management in Amazon SES</a>, Amazon SES Developer Guide, 2026-11-05 확인</li>
+<li><a href="https://docs.aws.amazon.com/general/latest/gr/ses.html">Amazon Simple Email Service endpoints and quotas</a>, AWS General Reference, 2026-11-05 확인</li>
+</ul>
+<h2 id="용어-설명">용어 설명</h2>
+<h3 id="term-smtp">SMTP</h3>
+<p>Simple Mail Transfer Protocol. 메일 서버끼리, 그리고 클라이언트가 서버로 메일을 보낼 때 쓰는 표준 프로토콜입니다. (<a href="https://www.rfc-editor.org/rfc/rfc5321">RFC 5321</a>)</p>
+<h3 id="term-sdk">SDK</h3>
+<p>Software Development Kit. 특정 서비스의 API를 프로그래밍 언어에서 편하게 호출하도록 만든 라이브러리 묶음입니다. (<a href="https://docs.aws.amazon.com/sdkref/latest/guide/overview.html">AWS SDKs and Tools</a>)</p>
+<h3 id="term-tls">TLS</h3>
+<p>Transport Layer Security. 네트워크 연결을 암호화하고 상대를 확인하는 프로토콜입니다. (<a href="https://www.rfc-editor.org/rfc/rfc8446">RFC 8446</a>)</p>
+<h3 id="term-starttls">STARTTLS</h3>
+<p>일반 SMTP 연결을 시작한 뒤 TLS 암호화 연결로 올리는 SMTP 확장입니다. (<a href="https://www.rfc-editor.org/rfc/rfc3207">RFC 3207</a>)</p>
+]]></content:encoded></item><item><title>1. n8n이란 무엇인가: 클라우드와 설치 버전의 차이, OS별 설치</title><link>https://dev.route50.kr/posts/n8n-1/</link><pubDate>Tue, 03 Nov 2026 00:00:00 +0900</pubDate><guid>https://dev.route50.kr/posts/n8n-1/</guid><description>n8n 워크플로 자동화 도구의 클라우드 버전과 직접 설치하는 버전의 비용, 관리 범위, 라이선스 차이와 npm으로 OS별 설치하는 방법을 정리했습니다.</description><content:encoded><![CDATA[<p><a href="https://n8n.io/">n8n</a>은 트리거와 작업 노드를 선으로 이어 반복 업무를 자동화하는 <a href="#term-workflow">워크플로</a> 도구입니다. 같은 n8n을 n8n이 대신 운영해 주는 클라우드 버전으로 쓰거나, 내 서버와 PC에 직접 설치해서 쓸 수 있습니다. 구독료와 실행 횟수 제한을 감수하고 관리를 맡기려면 클라우드, 데이터를 내 환경에 두고 관리를 직접 하려면 설치 버전을 고르면 됩니다.</p>
+<p>이 글은 n8n 공식 문서를 기준으로 2026-11-03에 확인한 내용을 정리했습니다. 이 글의 작성 환경에서는 설치와 실행을 직접 해 보지 못해, 명령어는 공식 문서에 적힌 그대로 옮겼고 실행 결과 출력은 싣지 않았습니다. Docker로 설치하고 방화벽을 설정하는 방법은 <a href="https://dev.route50.kr/posts/n8n-2/">2. n8n을 Docker로 설치하고 방화벽 설정하기</a>에 나눠 두었습니다.</p>
+<h2 id="n8n은-무엇을-하는-도구인가">n8n은 무엇을 하는 도구인가</h2>
+<p>n8n의 워크플로는 시작점인 트리거(Trigger)와 그 뒤에 이어지는 노드(Node)로 이루어집니다. 공식 튜토리얼에서는 정해진 시간에 실행되는 Schedule Trigger로 워크플로를 시작하고, 각 노드가 작업 하나를 처리해 결과를 다음 노드로 넘기는 구조로 설명합니다. (<a href="https://docs.n8n.io/build-your-first-workflow">Try it out</a>) 외부 서비스가 보낸 요청을 받는 <a href="#term-webhook">웹훅</a> 트리거도 있어서, 메신저나 메일, 데이터베이스를 연결하는 일에 많이 씁니다.</p>
+<figure>
+    <img loading="lazy" src="workflow-concept.svg"
+         alt="Schedule Trigger 노드에서 HTTP Request 노드, 메신저 전송 노드로 선이 이어지는 n8n 워크플로 개념도"/> <figcaption>
+            <p>그림 1. n8n 워크플로의 기본 구조 (직접 제작)</p>
+        </figcaption>
+</figure>
+
+<h2 id="클라우드-버전과-설치-버전의-차이">클라우드 버전과 설치 버전의 차이</h2>
+<p>n8n을 쓰는 방법은 크게 n8n Cloud와 셀프 호스팅(Self-hosted) 두 가지이고, 셀프 호스팅은 다시 무료 Community 버전과 유료 Business, Enterprise 버전으로 나뉩니다. (<a href="https://docs.n8n.io/choose-how-to-use-n8n">Choose your n8n</a>) 설치 버전에서 라이선스 키 없이 쓰는 것이 Community 버전입니다.</p>
+<table>
+	<thead>
+			<tr>
+					<th>비교 항목</th>
+					<th>n8n Cloud</th>
+					<th>셀프 호스팅 Community</th>
+					<th>셀프 호스팅 Business, Enterprise</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>비용</td>
+					<td>구독 요금제 (Starter, Pro, Enterprise), Pro 14일 체험</td>
+					<td>무료</td>
+					<td>유료, 구독하면 라이선스 키 발급</td>
+			</tr>
+			<tr>
+					<td>서버 운영</td>
+					<td>n8n이 호스팅, 업데이트, 확장을 맡음</td>
+					<td>직접 서버를 준비하고 관리</td>
+					<td>직접 서버를 준비하고 관리</td>
+			</tr>
+			<tr>
+					<td>기능</td>
+					<td>요금제에 따라 다름</td>
+					<td>대부분의 기능을 쓸 수 있음</td>
+					<td>SSO, 환경, 프로젝트 등 팀용 기능</td>
+			</tr>
+			<tr>
+					<td>라이선스 키</td>
+					<td>해당 없음</td>
+					<td>필요 없음</td>
+					<td>필요</td>
+			</tr>
+	</tbody>
+</table>
+<p>(<a href="https://docs.n8n.io/choose-how-to-use-n8n">Choose your n8n</a>, 2026-11-03 확인)</p>
+<h3 id="비용-실행-횟수로-나뉘는-요금제">비용: 실행 횟수로 나뉘는 요금제</h3>
+<p>클라우드 요금제는 한 달에 실행할 수 있는 워크플로 횟수로 갈립니다. 2026-11-03에 확인한 가격 페이지에서 연간 결제 기준 Starter는 월 20유로에 2,500회, Pro는 월 50유로에 10,000회였고, Enterprise는 문의해서 정합니다. 셀프 호스팅 Business는 월 667유로(연간 결제)에 40,000회로 표시되어 있었습니다. (<a href="https://n8n.io/pricing/">n8n Pricing</a>) 가격과 한도는 자주 바뀌므로 결제 전에 가격 페이지를 다시 확인하세요.</p>
+<p>Community 버전은 무료이고, 이메일을 등록하면 폴더, 편집기 안 디버그, 사용자 지정 실행 데이터 같은 기능을 추가 비용 없이 쓸 수 있습니다. 반면 <a href="#term-sso">SSO</a>(Single Sign-On: 통합 인증), 프로젝트, 환경, 외부 시크릿, Git 버전 관리는 설치 버전이라도 유료 버전에서만 열립니다. (<a href="https://docs.n8n.io/choose-how-to-use-n8n">Choose your n8n</a>)</p>
+<h3 id="관리-범위-업데이트와-백업은-누가-하는가">관리 범위: 업데이트와 백업은 누가 하는가</h3>
+<p>클라우드는 호스팅과 업데이트, 확장을 n8n이 맡습니다. 설치 버전은 서버 준비부터 업데이트, 데이터 백업, 보안 설정, 외부 접속 설정까지 직접 해야 합니다. 설치 버전이 무료여도 서버 비용과 관리 시간이 든다는 점이 실제로 가장 크게 갈리는 부분입니다. Docker Compose 설치 문서도 직접 호스팅은 숙련된 사용자 대상이며 그렇지 않으면 n8n Cloud를 권한다고 안내합니다. (<a href="https://docs.n8n.io/deploy/host-n8n/install-options/use-a-cloud-provider/use-docker-compose">Docker Compose</a>)</p>
+<h3 id="라이선스-무료-버전으로-무엇까지-할-수-있는가">라이선스: 무료 버전으로 무엇까지 할 수 있는가</h3>
+<p>n8n 소스는 Sustainable Use License로 공개되어 있습니다. 라이선스는 소프트웨어를 자기 회사의 내부 업무 목적이나 비영리, 개인 목적으로만 쓰거나 수정하도록 허용하고, 무료이면서 비영리인 경우가 아니면 다른 사람에게 배포하는 것을 금지합니다. (<a href="https://github.com/n8n-io/n8n/blob/master/LICENSE.md">n8n LICENSE.md</a>) 우리 팀의 업무 자동화에 쓰는 것은 문제가 없지만, n8n을 포함한 서비스를 고객에게 판매하려는 경우에는 라이선스를 직접 읽거나 n8n에 문의해야 합니다.</p>
+<h3 id="어떤-쪽을-고를까">어떤 쪽을 고를까</h3>
+<p>개인이 가볍게 시험해 보거나 서버를 관리할 여력이 없으면 클라우드의 14일 체험으로 시작하는 편이 빠릅니다. 사내 데이터를 외부에 두기 어렵거나 월 실행 횟수에 따른 요금이 부담된다면 설치 버전을 고릅니다. 대신 서버 비용과 관리 시간을 직접 감당해야 합니다.</p>
+<h2 id="설치-방법의-종류와-nodejs-요구-사항">설치 방법의 종류와 Node.js 요구 사항</h2>
+<p>설치 버전은 Docker, Docker Compose, <a href="#term-npm">npm</a>(Node Package Manager: Node.js 패키지 관리자) 가운데 하나로 설치합니다. 공식 호스팅 문서는 데이터베이스까지 갖춘 운영 환경에는 Docker Compose를 안내하고, npm 설치는 n8n 3.0부터 지원이 중단될 예정(deprecated)이라고 밝힙니다. (<a href="https://docs.n8n.io/deploy/host-n8n">Hosting n8n</a>, <a href="https://docs.n8n.io/deploy/host-n8n/install-options/install-with-npm">npm</a>) 그래서 오래 쓸 환경은 Docker가 낫고, 이 글에서는 운영체제별 차이가 드러나는 npm 설치를 먼저 설명합니다.</p>
+<p>npm 설치에는 Node.js 20.19 이상 24.x 이하가 필요합니다. (<a href="https://docs.n8n.io/deploy/host-n8n/install-options/install-with-npm">npm</a>) 설치 전에 터미널에서 버전부터 확인합니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>node -v
+</span></span><span style="display:flex;"><span>npm -v
+</span></span></code></pre></div><h2 id="운영체제별-npm-설치">운영체제별 npm 설치</h2>
+<p>세 운영체제 모두 Node.js를 설치한 뒤 같은 npm 명령으로 n8n을 설치하고 실행합니다. 차이는 Node.js 설치 방법과 터미널 종류뿐입니다. Node.js 설치 파일은 <a href="https://nodejs.org/en/download">Node.js 다운로드 페이지</a>에서 운영체제에 맞게 받습니다.</p>
+<h3 id="windows">Windows</h3>
+<p>Node.js 설치 파일을 받아 실행하고, PowerShell을 새로 열어 <code>node -v</code>로 버전이 나오는지 확인합니다. npm 문서는 Windows에서 문제가 생기면 Node.js 설치 상태를 먼저 점검하라고 안내합니다. 설치와 실행 명령은 PowerShell에서 아래와 같이 씁니다.</p>
+<h3 id="macos">macOS</h3>
+<p>macOS도 Node.js 설치 파일을 쓰거나, 패키지 관리자를 이미 쓰고 있다면 그쪽으로 Node.js를 설치합니다. 터미널을 새로 열어 <code>node -v</code>를 확인한 뒤 같은 명령을 씁니다.</p>
+<h3 id="linux">Linux</h3>
+<p>배포판 저장소의 Node.js 버전이 20.19보다 낮을 수 있으므로 <code>node -v</code>로 반드시 확인합니다. 낮다면 Node.js 사이트에서 안내하는 방법으로 더 높은 버전을 설치합니다. 전역 설치(<code>-g</code>)가 권한 오류로 막히면 <code>sudo</code>를 붙이기 전에 npm의 전역 설치 경로 설정부터 확인하는 것이 안전합니다.</p>
+<h3 id="설치와-실행-명령">설치와 실행 명령</h3>
+<p>설치하지 않고 한 번만 실행해 보려면 <code>npx n8n</code>을 씁니다. 전역으로 설치해 두고 쓰려면 아래 명령을 실행합니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>npm install n8n -g
+</span></span><span style="display:flex;"><span>n8n
+</span></span></code></pre></div><p>실행하면 브라우저에서 <code>http://localhost:5678</code>로 접속합니다. 업데이트는 <code>npm update -g n8n</code>, 특정 버전 설치는 <code>npm install -g n8n@버전</code>입니다. 업그레이드 중 데이터베이스 마이그레이션이 있었다면 이전 버전을 다시 설치한 뒤 <code>n8n db:revert</code>로 되돌립니다. npm으로 설치한 n8n에서는 n8n Assistant를 쓸 수 없습니다. (<a href="https://docs.n8n.io/deploy/host-n8n/install-options/install-with-npm">npm</a>)</p>
+<p>webhook으로 외부 서비스의 요청을 받으려면 인터넷에서 접근 가능한 주소가 필요합니다. 집이나 사무실 PC에서 <code>localhost:5678</code>로만 띄운 n8n은 외부 서비스가 접근할 수 없으므로, 서버에 설치하고 도메인과 HTTPS를 연결하는 방법을 <a href="https://dev.route50.kr/posts/n8n-2/">2편</a>에서 다룹니다.</p>
+<h2 id="참고-자료">참고 자료</h2>
+<ul>
+<li><a href="https://docs.n8n.io/choose-how-to-use-n8n">Choose your n8n</a>, n8n Docs, 2026-11-03 확인</li>
+<li><a href="https://docs.n8n.io/deploy/host-n8n">Hosting n8n</a>, n8n Docs, 2026-11-03 확인</li>
+<li><a href="https://docs.n8n.io/deploy/host-n8n/install-options/install-with-npm">npm</a>, n8n Docs, 2026-11-03 확인</li>
+<li><a href="https://docs.n8n.io/deploy/host-n8n/install-options/use-a-cloud-provider/use-docker-compose">Docker Compose</a>, n8n Docs, 2026-11-03 확인</li>
+<li><a href="https://docs.n8n.io/build-your-first-workflow">Try it out</a>, n8n Docs, 2026-11-03 확인</li>
+<li><a href="https://n8n.io/pricing/">n8n Pricing</a>, n8n, 2026-11-03 확인</li>
+<li><a href="https://github.com/n8n-io/n8n/blob/master/LICENSE.md">LICENSE.md</a>, n8n GitHub, 2026-11-03 확인</li>
+<li><a href="https://nodejs.org/en/download">Node.js 다운로드</a>, Node.js, 2026-11-03 확인</li>
+</ul>
+<h2 id="용어-설명">용어 설명</h2>
+<h3 id="term-workflow">워크플로</h3>
+<p>Workflow. n8n에서 트리거와 노드를 순서대로 이어 만든 자동화 작업 하나를 뜻합니다. (<a href="https://docs.n8n.io/build-your-first-workflow">Try it out</a>)</p>
+<h3 id="term-sso">SSO</h3>
+<p>Single Sign-On(통합 인증). 한 번 로그인하면 여러 서비스를 다시 로그인하지 않고 쓰는 방식입니다. n8n에서는 유료 버전에서 쓸 수 있는 기능입니다. (<a href="https://docs.n8n.io/choose-how-to-use-n8n">Choose your n8n</a>)</p>
+<h3 id="term-npm">npm</h3>
+<p>Node Package Manager. Node.js 패키지를 설치하고 관리하는 도구입니다. n8n은 <code>npm install n8n -g</code>로 설치할 수 있습니다. (<a href="https://docs.n8n.io/deploy/host-n8n/install-options/install-with-npm">npm 설치 문서</a>)</p>
+<h3 id="term-webhook">웹훅</h3>
+<p>Webhook. 외부 서비스가 특정 사건이 생길 때 지정한 주소로 HTTP 요청을 보내 알려 주는 방식입니다. n8n의 Webhook 노드가 이 요청을 받습니다. (<a href="https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/">n8n Webhook node</a>)</p>
+]]></content:encoded></item><item><title>2. ORM과 SQL 직접 작성, AI 도구와의 궁합</title><link>https://dev.route50.kr/posts/prisma-orm-2/</link><pubDate>Sun, 01 Nov 2026 00:00:00 +0900</pubDate><guid>https://dev.route50.kr/posts/prisma-orm-2/</guid><description>ORM을 쓰는 경우와 SQL을 직접 쓰는 경우의 장단점을 비교하고, AI 도구로 개발할 때 Prisma가 주는 이점과 주의점을 정리했습니다.</description><content:encoded><![CDATA[<p><a href="https://dev.route50.kr/posts/prisma-orm-1/">1. Prisma ORM 처음 써 보기와 다른 ORM과의 비교</a>에서 이어지는 글입니다. 이번에는 <a href="#term-orm">ORM</a>(Object-Relational Mapping: 객체 관계 매핑)을 아예 쓰지 않는 선택지와 비교하고, AI 도구로 개발할 때 ORM이 어떤 영향을 주는지 정리합니다. 기준은 1편과 같은 Prisma 7 문서(2026-11-01 확인)입니다.</p>
+<h2 id="orm을-쓸-때와-쓰지-않을-때">ORM을 쓸 때와 쓰지 않을 때</h2>
+<p>ORM 없이 개발한다는 것은 데이터베이스 드라이버로 <a href="#term-sql">SQL</a>(Structured Query Language: 구조화 질의 언어) 문장을 직접 보내고 결과 행을 코드의 객체로 옮기는 일을 직접 한다는 뜻입니다. Prisma 문서가 꼽는 ORM의 장점은 반복되는 <a href="#term-crud">CRUD</a>(Create, Read, Update, Delete: 생성, 조회, 수정, 삭제) 코드가 줄고 SQL을 거의 몰라도 쓸 수 있다는 것입니다. 단점으로는 객체와 테이블 사이의 개념 차이(impedance mismatch), 스키마가 바뀔 때 객체를 맞춰 주는 부담, 넓은 API, 일부 복잡한 쿼리의 표현 어려움을 듭니다. (<a href="https://www.prisma.io/docs/orm/overview/prisma-in-your-stack/is-prisma-an-orm">Is Prisma an ORM?</a>)</p>
+<p>이를 뒤집으면 SQL 직접 작성의 성격이 나옵니다.</p>
+<table>
+	<thead>
+			<tr>
+					<th>구분</th>
+					<th>ORM(Prisma 기준)</th>
+					<th>SQL 직접 작성</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>반복 코드</td>
+					<td>CRUD는 메서드 호출로 끝남</td>
+					<td>쿼리와 결과 매핑을 직접 작성</td>
+			</tr>
+			<tr>
+					<td>타입</td>
+					<td>스키마에서 자동 생성</td>
+					<td>직접 선언하거나 별도 도구 필요</td>
+			</tr>
+			<tr>
+					<td>마이그레이션</td>
+					<td>스키마 변경에서 파생</td>
+					<td>SQL 파일을 직접 관리</td>
+			</tr>
+			<tr>
+					<td>복잡한 쿼리</td>
+					<td>표현이 어려우면 raw SQL로 우회</td>
+					<td>제약 없음</td>
+			</tr>
+			<tr>
+					<td>학습 비용</td>
+					<td>ORM 고유 API를 배워야 함</td>
+					<td>SQL만 알면 됨</td>
+			</tr>
+	</tbody>
+</table>
+<p>둘은 배타적이지 않습니다. Prisma도 raw SQL을 실행할 수 있고, <code>.sql</code> 파일에서 타입을 만들어 주는 TypedSQL은 <code>typedSql</code> 미리보기 기능을 켜면 쓸 수 있습니다. 단순한 읽기와 쓰기는 Prisma Client로, 집계나 복잡한 <a href="#term-join">JOIN</a>(조인: 여러 테이블을 키로 묶어 조회하는 쿼리)은 SQL로 나누는 구성이 현실적입니다. (<a href="https://www.prisma.io/docs/orm/prisma-client/using-raw-sql/typedsql">TypedSQL</a>)</p>
+<p>트랜잭션처럼 데이터베이스 동작을 세밀하게 다뤄야 할 때는 ORM이 숨긴 부분을 알아야 합니다. Prisma 8 문서에는 트랜잭션에 타임아웃이 없고 쓰기 충돌을 자동으로 재시도하지 않으므로, 필요하면 데이터베이스 설정과 재시도 코드를 직접 챙기라고 나와 있습니다. (<a href="https://www.prisma.io/docs/orm/prisma-client/queries/transactions">Transactions</a>) 이 내용은 8 기준이라 7에서는 다를 수 있습니다. 어느 쪽이든 ORM을 쓴다고 데이터베이스 지식이 필요 없어지지는 않습니다.</p>
+<h2 id="ai-도구로-개발할-때">AI 도구로 개발할 때</h2>
+<p>이 부분은 공식 문서에서 확인한 사실과 제 판단을 나누어 적습니다. 직접 측정한 결과는 없습니다.</p>
+<p>문서에서 확인한 사실부터 보면, Prisma는 AI 도구를 위한 장치를 몇 가지 제공합니다. Prisma <a href="#term-mcp">MCP</a>(Model Context Protocol: AI 도구가 외부 서비스와 연결하는 규약) 서버(<code>https://mcp.prisma.io/mcp</code>)는 Claude Code, Cursor, VS Code 같은 도구에 연결해 데이터베이스 관리와 SQL 실행, 문서 검색을 맡깁니다. 그리고 AI 에이전트가 <code>prisma migrate reset --force</code> 같은 파괴적 명령을 실행하면 Prisma CLI가 막고, 사용자가 명시적으로 동의한 뒤 <code>PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION</code> 환경 변수를 설정해야 다시 실행되게 합니다. (<a href="https://www.prisma.io/docs/ai/tools/mcp-server">Prisma MCP server</a>)</p>
+<p>여기서부터는 제 판단입니다. ORM의 장점은 타입에서 나온다고 봅니다. AI가 만든 쿼리에 없는 필드나 잘못된 관계가 들어 있으면 TypeScript 컴파일 단계에서 걸러지므로, 코드를 읽기 전에 틀린 부분을 알 수 있습니다. 스키마 파일 하나에 모델 전체가 모여 있어서 AI에게 맥락을 주기 쉽다는 점도 있습니다. 반대로 단점은 AI가 지식이 오래된 상태로 옛 문법을 쓸 수 있다는 것입니다. Prisma 7에서 접속 주소 위치가 바뀌고 8에서 일부 API가 사라진 것처럼 버전 변화가 크면, 생성된 코드가 현재 버전과 맞지 않을 수 있습니다. 또 <code>migrate</code>처럼 데이터베이스를 바꾸는 명령은 AI가 실행하기 쉬운 만큼 위험도 커서, Prisma가 동의 절차를 따로 둔 것도 그런 위험이 실제로 있기 때문일 것입니다.</p>
+<p>SQL 직접 작성은 AI가 비교적 익숙하게 다룰 것이라고 짐작하지만, 이 글에서 확인한 내용은 아닙니다. 대신 결과를 검증하는 일은 사람이 해야 합니다. 타입 검사가 없으면 컬럼 이름 오타나 잘못된 JOIN이 실행해 봐야 드러납니다.</p>
+<p>정리하면 ORM은 AI가 만든 코드를 기계가 먼저 검사해 준다는 점에서, SQL 직접 작성은 쿼리를 한 줄씩 통제한다는 점에서 각각 쓸모가 있습니다. 어느 쪽이든 데이터베이스를 바꾸는 명령은 사람이 확인하고 넘어가는 것이 안전합니다.</p>
+<h2 id="참고-자료">참고 자료</h2>
+<ul>
+<li><a href="https://www.prisma.io/docs/orm/overview/prisma-in-your-stack/is-prisma-an-orm">Is Prisma an ORM?</a>, Prisma Documentation, 2026-11-01 확인</li>
+<li><a href="https://www.prisma.io/docs/orm/prisma-client/using-raw-sql/typedsql">TypedSQL</a>, Prisma Documentation, 2026-11-01 확인</li>
+<li><a href="https://www.prisma.io/docs/orm/prisma-client/queries/transactions">Transactions</a>, Prisma Documentation, 2026-11-01 확인</li>
+<li><a href="https://www.prisma.io/docs/ai/tools/mcp-server">Prisma MCP server</a>, Prisma Documentation, 2026-11-01 확인</li>
+</ul>
+<h2 id="용어-설명">용어 설명</h2>
+<h3 id="term-orm">ORM</h3>
+<p>Object-Relational Mapping(객체 관계 매핑). 코드의 객체와 관계형 데이터베이스의 테이블을 이어 주어, SQL을 직접 쓰지 않고도 데이터를 읽고 쓰게 하는 도구입니다. (<a href="https://www.prisma.io/docs/orm/overview/prisma-in-your-stack/is-prisma-an-orm">Prisma 문서</a>)</p>
+<h3 id="term-crud">CRUD</h3>
+<p>Create, Read, Update, Delete. 데이터를 만들고 읽고 고치고 지우는 기본 작업 네 가지입니다. (<a href="https://www.prisma.io/docs/orm/prisma-client/queries/crud">CRUD 쿼리</a>)</p>
+<h3 id="term-join">JOIN</h3>
+<p>조인. 여러 테이블의 행을 공통 키로 묶어 한 번에 조회하는 SQL 구문입니다. Prisma는 <code>include</code>로 관계를 가져올 때 JOIN을 직접 쓰지 않게 해 줍니다. (<a href="https://www.prisma.io/docs/orm/overview/prisma-in-your-stack/is-prisma-an-orm">Is Prisma an ORM?</a>)</p>
+<h3 id="term-mcp">MCP</h3>
+<p>Model Context Protocol. AI 도구가 외부 서비스의 기능을 호출하도록 연결하는 규약입니다. (<a href="https://www.prisma.io/docs/ai/tools/mcp-server">Prisma MCP server</a>)</p>
+<h3 id="term-sql">SQL</h3>
+<p>Structured Query Language(구조화 질의 언어). 관계형 데이터베이스에 데이터를 묻고 바꾸는 표준 언어입니다. (<a href="https://www.prisma.io/docs/orm/prisma-client/using-raw-sql/typedsql">TypedSQL</a>)</p>
+]]></content:encoded></item><item><title>1. Prisma ORM 처음 써 보기와 다른 ORM과의 비교</title><link>https://dev.route50.kr/posts/prisma-orm-1/</link><pubDate>Sun, 01 Nov 2026 00:00:00 +0900</pubDate><guid>https://dev.route50.kr/posts/prisma-orm-1/</guid><description>Prisma ORM이 스키마 파일 하나로 마이그레이션과 타입을 만드는 방식과, TypeORM, Drizzle과 어디가 다른지 정리했습니다.</description><content:encoded><![CDATA[<p>Prisma는 Node.js와 TypeScript에서 쓰는 오픈소스 <a href="#term-orm">ORM</a>(Object-Relational Mapping: 객체 관계 매핑)입니다. 이 글은 Prisma 7 문서를 기준으로 정리했고, 확인한 2026-11-01에는 npm에 8.0.0-rc 버전도 올라와 있었습니다. 8 문서에는 <code>$transaction</code>에 쿼리 배열을 넘기던 형태가 없어졌다고 적혀 있어서, 버전을 올릴 때는 문서를 다시 봐야 합니다. 이 글의 코드는 공식 퀵스타트를 따라 정리한 것이고 직접 실행해서 확인한 것은 아닙니다.</p>
+<h2 id="prisma는-무엇으로-이루어져-있나">Prisma는 무엇으로 이루어져 있나</h2>
+<p>Prisma ORM은 세 부분으로 나뉩니다. Prisma Client는 스키마에서 자동으로 만들어지는 타입 안전 쿼리 도구이고, 결과는 평범한 JavaScript 객체로 돌아옵니다. Prisma Migrate는 <a href="#term-migration">마이그레이션</a>을 관리하고, Prisma Studio는 데이터를 눈으로 보고 고치는 화면입니다. 이 중 Studio만 오픈소스가 아니고 로컬에서만 실행됩니다. (<a href="https://www.prisma.io/docs/orm/overview/introduction/what-is-prisma">What is Prisma ORM?</a>)</p>
+<p>시작점은 <code>schema.prisma</code> 파일입니다. 데이터베이스 종류를 적는 <code>datasource</code>, 클라이언트를 어디에 만들지 정하는 <code>generator</code>, 테이블에 대응하는 <code>model</code>을 한 파일에 적습니다. Prisma 7부터 접속 주소는 스키마가 아니라 <code>prisma.config.ts</code>에 둡니다.</p>
+<pre tabindex="0"><code class="language-prisma" data-lang="prisma">generator client {
+  provider = &#34;prisma-client&#34;
+  output   = &#34;../generated/prisma&#34;
+}
+
+datasource db {
+  provider = &#34;sqlite&#34;
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  name  String?
+  posts Post[]
+}
+
+model Post {
+  id       Int    @id @default(autoincrement())
+  title    String
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId Int
+}
+</code></pre><p>모델을 고친 뒤에는 두 가지 일을 해야 합니다. <code>prisma migrate dev</code>는 바뀐 부분을 <a href="#term-sql">SQL</a>(Structured Query Language: 구조화 질의 언어) 마이그레이션 파일로 만들어 데이터베이스에 적용하고, <code>prisma generate</code>는 코드에서 쓰는 클라이언트와 타입을 다시 만듭니다. 한 파일이 데이터베이스 쪽과 코드 쪽을 함께 이끄는 구조입니다.</p>
+<figure>
+    <img loading="lazy" src="prisma-workflow.svg"
+         alt="schema.prisma에서 migrate dev는 마이그레이션 SQL과 데이터베이스로, generate는 Prisma Client와 앱 코드로 이어지는 그림"/> <figcaption>
+            <p>그림 1. 스키마 하나에서 갈라지는 두 갈래 (직접 제작)</p>
+        </figcaption>
+</figure>
+
+<p>생성된 클라이언트로 쓰는 쿼리는 이렇게 생겼습니다. Prisma 7은 데이터베이스 드라이버를 어댑터로 따로 넘기는 방식이라, SQLite라면 <code>@prisma/adapter-better-sqlite3</code>를 설치해 <code>PrismaClient</code>에 넣어야 합니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#ff7b72">const</span> user <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#ff7b72">await</span> prisma.user.create({
+</span></span><span style="display:flex;"><span>  data<span style="color:#ff7b72;font-weight:bold">:</span> {
+</span></span><span style="display:flex;"><span>    email<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#39;alice@example.com&#39;</span>,
+</span></span><span style="display:flex;"><span>    name<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#39;Alice&#39;</span>,
+</span></span><span style="display:flex;"><span>    posts<span style="color:#ff7b72;font-weight:bold">:</span> { create<span style="color:#ff7b72;font-weight:bold">:</span> { title<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#39;Hello World&#39;</span> } },
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  include<span style="color:#ff7b72;font-weight:bold">:</span> { posts: <span style="color:#ff7b72">true</span> },
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><p>사용자와 글을 한 번에 만들고, <code>include</code>로 관계까지 같이 가져옵니다. 여러 테이블을 묶는 쿼리를 직접 쓰지 않아도 되고, 결과의 타입도 스키마에서 정해집니다.</p>
+<h2 id="다른-orm과-비교">다른 ORM과 비교</h2>
+<p>Prisma 문서는 전통적인 ORM을 <a href="#term-active-record">Active Record</a>와 <a href="#term-data-mapper">Data Mapper</a>로 나누고, Prisma를 Data Mapper의 한 변형으로 봅니다. 스키마 하나가 타입, 마이그레이션, 매핑을 모두 정하기 때문에 코드의 클래스와 데이터베이스 스키마를 따로 맞춰 줄 필요가 줄어든다는 설명입니다. (<a href="https://www.prisma.io/docs/orm/overview/prisma-in-your-stack/is-prisma-an-orm">Is Prisma an ORM?</a>)</p>
+<p>같은 TypeScript 진영의 TypeORM과 Drizzle은 출발점이 다릅니다. TypeORM은 클래스에 <code>@Entity</code>, <code>@Column</code> 같은 데코레이터를 붙여 엔티티를 만들고, Data Mapper와 Active Record를 둘 다 지원합니다. (<a href="https://typeorm.io/">TypeORM</a>) Drizzle은 &ldquo;SQL을 알면 Drizzle도 안다&quot;는 방향이라, 테이블을 TypeScript 코드로 선언하고 SQL과 닮은 API로 쿼리를 씁니다. 관계 데이터를 한 번에 가져오는 별도 API도 있습니다. (<a href="https://orm.drizzle.team/docs/overview">Drizzle ORM</a>)</p>
+<figure>
+    <img loading="lazy" src="schema-location.svg"
+         alt="SQL 직접 작성, Drizzle, TypeORM, Prisma가 스키마를 정의하는 위치와 쿼리 모양을 비교한 표"/> <figcaption>
+            <p>그림 2. 스키마와 쿼리를 쓰는 방식 (직접 제작)</p>
+        </figcaption>
+</figure>
+
+<p>Prisma만의 특징은 스키마가 TypeScript가 아닌 별도 언어라는 점입니다. 덕분에 한 파일만 보면 데이터 모델 전체가 보이고 클라이언트와 마이그레이션이 거기서 나오지만, 스키마를 고칠 때마다 <code>generate</code>를 다시 돌려야 한다는 번거로움도 같이 옵니다. 반대로 Drizzle이나 TypeORM은 스키마가 곧 TypeScript 코드라서 별도 생성 단계가 필요 없습니다. 어느 쪽이 낫다기보다, 스키마를 코드 옆에 두고 싶은지 독립된 문서로 두고 싶은지의 차이에 가깝습니다.</p>
+<p>복잡한 쿼리는 ORM 전반의 약점입니다. Prisma 문서도 ORM의 단점으로 일부 복잡한 쿼리를 표현하기 어렵다는 점을 들고, 그럴 때는 SQL을 직접 쓰면 된다고 안내합니다. Prisma에는 <code>.sql</code> 파일에 쓴 쿼리에서 타입을 만들어 주는 TypedSQL이 있는데, 확인한 문서에서는 <code>typedSql</code> 미리보기 기능을 켜야 쓸 수 있었습니다. (<a href="https://www.prisma.io/docs/orm/prisma-client/using-raw-sql/typedsql">TypedSQL</a>)</p>
+<p>다음 글에서는 ORM을 쓰지 않고 SQL을 직접 쓰는 경우와 비교하고, AI 도구로 개발할 때 ORM이 어떤 영향을 주는지 정리합니다. <a href="https://dev.route50.kr/posts/prisma-orm-2/">2. ORM과 SQL 직접 작성, AI 도구와의 궁합</a></p>
+<h2 id="참고-자료">참고 자료</h2>
+<ul>
+<li><a href="https://www.prisma.io/docs/orm/overview/introduction/what-is-prisma">What is Prisma ORM?</a>, Prisma Documentation, 2026-11-01 확인</li>
+<li><a href="https://www.prisma.io/docs/orm/overview/prisma-in-your-stack/is-prisma-an-orm">Is Prisma an ORM?</a>, Prisma Documentation, 2026-11-01 확인</li>
+<li><a href="https://www.prisma.io/docs/prisma-orm/quickstart/sqlite">Quickstart: SQLite</a>, Prisma Documentation, 2026-11-01 확인</li>
+<li><a href="https://www.prisma.io/docs/orm/prisma-client/using-raw-sql/typedsql">TypedSQL</a>, Prisma Documentation, 2026-11-01 확인</li>
+<li><a href="https://www.prisma.io/docs/orm/prisma-client/queries/transactions">Transactions</a>, Prisma Documentation, 2026-11-01 확인</li>
+<li><a href="https://typeorm.io/">TypeORM</a>, TypeORM, 2026-11-01 확인</li>
+<li><a href="https://orm.drizzle.team/docs/overview">Drizzle ORM overview</a>, Drizzle Documentation, 2026-11-01 확인</li>
+</ul>
+<h2 id="용어-설명">용어 설명</h2>
+<h3 id="term-orm">ORM</h3>
+<p>Object-Relational Mapping(객체 관계 매핑). 코드의 객체와 관계형 데이터베이스의 테이블을 이어 주어, SQL을 직접 쓰지 않고도 데이터를 읽고 쓰게 하는 도구입니다. (<a href="https://www.prisma.io/docs/orm/overview/prisma-in-your-stack/is-prisma-an-orm">Prisma 문서</a>)</p>
+<h3 id="term-sql">SQL</h3>
+<p>Structured Query Language(구조화 질의 언어). 관계형 데이터베이스에 데이터를 묻고 바꾸는 표준 언어입니다. (<a href="https://www.prisma.io/docs/orm/prisma-client/using-raw-sql/typedsql">TypedSQL</a>)</p>
+<h3 id="term-migration">마이그레이션</h3>
+<p>Migration. 데이터베이스 구조(테이블, 컬럼)가 바뀐 내용을 파일로 기록하고 순서대로 적용하는 방식입니다. (<a href="https://www.prisma.io/docs/orm/prisma-migrate">Prisma Migrate</a>)</p>
+<h3 id="term-active-record">Active Record</h3>
+<p>모델 클래스가 테이블과 거의 일대일로 대응하고, 객체 하나가 행 하나를 감싸 저장까지 맡는 방식입니다. (<a href="https://www.prisma.io/docs/orm/overview/prisma-in-your-stack/is-prisma-an-orm">Is Prisma an ORM?</a>)</p>
+<h3 id="term-data-mapper">Data Mapper</h3>
+<p>엔티티 클래스는 데이터베이스를 모르고, 별도의 매퍼가 데이터 이동과 SQL 생성을 맡는 방식입니다. (<a href="https://www.prisma.io/docs/orm/overview/prisma-in-your-stack/is-prisma-an-orm">Is Prisma an ORM?</a>)</p>
+]]></content:encoded></item></channel></rss>

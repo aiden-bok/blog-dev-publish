@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" role="img" aria-labelledby="diagram-title diagram-desc">
+  <title id="diagram-title">전용 도구와 범용 도구</title>
+  <desc id="diagram-desc">왼쪽은 한 DB 전용 도구로 pgAdmin은 PostgreSQL, MySQL Workbench는 MySQL을 다룬다. 오른쪽은 여러 DB 범용 도구로 DBeaver는 100개 이상 드라이버, DataGrip은 50개 이상 DB, HeidiSQL은 MariaDB, MySQL, MS SQL, PostgreSQL, SQLite 등을 지원한다.</desc>
+  <defs>
+    <filter id="card-shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.12" />
+    </filter>
+  </defs>
+  <rect width="1200" height="560" rx="24" fill="#f8fafc" />
+  <rect x="1" y="1" width="1198" height="558" rx="24" fill="none" stroke="#e2e8f0" stroke-width="2" />
+
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <text x="64" y="84" font-size="34" font-weight="800" fill="#0f172a">전용 도구와 범용 도구</text>
+    <text x="64" y="124" font-size="24" font-weight="500" fill="#475569">쓰는 DB가 하나인지 여러 개인지에 따라 나눕니다</text>
+
+    <!-- 왼쪽: 전용 -->
+    <g filter="url(#card-shadow)">
+      <rect x="64" y="160" width="504" height="352" rx="18" fill="#ffffff" stroke="#c7d2fe" stroke-width="2" />
+    </g>
+    <rect x="64" y="160" width="504" height="64" rx="18" fill="#4f46e5" />
+    <rect x="64" y="200" width="504" height="24" fill="#4f46e5" />
+    <text x="96" y="204" font-size="28" font-weight="800" fill="#ffffff">한 DB 전용</text>
+    <rect x="96" y="256" width="440" height="96" rx="12" fill="#eef2ff" />
+    <text x="120" y="296" font-size="28" font-weight="700" fill="#1e1b4b">pgAdmin</text>
+    <text x="120" y="334" font-size="24" fill="#3730a3">PostgreSQL</text>
+    <rect x="96" y="384" width="440" height="96" rx="12" fill="#eef2ff" />
+    <text x="120" y="424" font-size="28" font-weight="700" fill="#1e1b4b">MySQL Workbench</text>
+    <text x="120" y="462" font-size="24" fill="#3730a3">MySQL</text>
+
+    <!-- 오른쪽: 범용 -->
+    <g filter="url(#card-shadow)">
+      <rect x="632" y="160" width="504" height="352" rx="18" fill="#ffffff" stroke="#a7f3d0" stroke-width="2" />
+    </g>
+    <rect x="632" y="160" width="504" height="64" rx="18" fill="#059669" />
+    <rect x="632" y="200" width="504" height="24" fill="#059669" />
+    <text x="664" y="204" font-size="28" font-weight="800" fill="#ffffff">여러 DB 범용</text>
+    <rect x="664" y="244" width="440" height="72" rx="12" fill="#ecfdf5" />
+    <text x="688" y="272" font-size="28" font-weight="700" fill="#064e3b">DBeaver</text>
+    <text x="688" y="304" font-size="24" fill="#047857">100개 이상 드라이버</text>
+    <rect x="664" y="328" width="440" height="72" rx="12" fill="#ecfdf5" />
+    <text x="688" y="356" font-size="28" font-weight="700" fill="#064e3b">DataGrip</text>
+    <text x="688" y="388" font-size="24" fill="#047857">50개 이상 DB</text>
+    <rect x="664" y="412" width="440" height="72" rx="12" fill="#ecfdf5" />
+    <text x="688" y="440" font-size="28" font-weight="700" fill="#064e3b">HeidiSQL</text>
+    <text x="688" y="472" font-size="24" fill="#047857">MySQL, PostgreSQL, SQLite 등</text>
+  </g>
+</svg>

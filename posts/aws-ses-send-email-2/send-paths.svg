@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" role="img" aria-labelledby="diagram-title diagram-desc">
+  <title id="diagram-title">SES 발송 경로 두 가지</title>
+  <desc id="diagram-desc">애플리케이션에서 SMTP 587 포트와 SMTP 자격 증명으로 SES에 가는 경로, SDK의 HTTPS 호출과 AWS 자격 증명으로 SES에 가는 경로를 비교한 도표</desc>
+  <defs>
+    <filter id="card-shadow" x="-10%" y="-20%" width="120%" height="160%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#0f172a" flood-opacity="0.12" />
+    </filter>
+    <marker id="arrow" viewBox="0 0 14 14" refX="12" refY="7" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M7 2 L12 7 L7 12" fill="none" stroke="#475569" stroke-width="2.5" stroke-linejoin="miter" stroke-linecap="butt" />
+    </marker>
+  </defs>
+  <rect width="1200" height="600" rx="24" fill="#f8fafc" />
+  <rect x="1" y="1" width="1198" height="598" rx="24" fill="none" stroke="#e2e8f0" stroke-width="2" />
+
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <text x="64" y="84" font-size="34" font-weight="800" fill="#0f172a">SES 발송 경로 두 가지</text>
+    <text x="64" y="124" font-size="24" font-weight="500" fill="#64748b">경로마다 쓰는 자격 증명이 다릅니다</text>
+
+    <g filter="url(#card-shadow)">
+      <rect x="64" y="288" width="208" height="112" rx="18" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" />
+      <rect x="400" y="168" width="400" height="136" rx="18" fill="#ffffff" stroke="#c7d2fe" stroke-width="2" />
+      <rect x="400" y="384" width="400" height="136" rx="18" fill="#ffffff" stroke="#a7f3d0" stroke-width="2" />
+      <rect x="928" y="288" width="208" height="112" rx="18" fill="#ffffff" stroke="#fde68a" stroke-width="2" />
+    </g>
+
+    <text x="168" y="334" font-size="28" font-weight="700" fill="#0f172a" text-anchor="middle">내 애플리케이션</text>
+    <text x="168" y="372" font-size="24" fill="#475569" text-anchor="middle">Node.js 코드</text>
+
+    <text x="432" y="216" font-size="28" font-weight="700" fill="#1e1b4b">SMTP</text>
+    <text x="432" y="256" font-size="24" fill="#475569">587 포트 + STARTTLS</text>
+    <text x="432" y="290" font-size="24" fill="#475569">SMTP 사용자 이름과 비밀번호</text>
+
+    <text x="432" y="432" font-size="28" font-weight="700" fill="#064e3b">SDK(API)</text>
+    <text x="432" y="472" font-size="24" fill="#475569">HTTPS 요청 (API v2)</text>
+    <text x="432" y="506" font-size="24" fill="#475569">AWS 자격 증명으로 서명</text>
+
+    <text x="1032" y="334" font-size="28" font-weight="700" fill="#78350f" text-anchor="middle">Amazon SES</text>
+    <text x="1032" y="372" font-size="24" fill="#475569" text-anchor="middle">인증한 도메인</text>
+
+    <g stroke="#475569" stroke-width="2.5" stroke-linecap="butt" stroke-linejoin="miter" fill="none" marker-end="url(#arrow)">
+      <path d="M276 330 L338 330 L338 236 L396 236" />
+      <path d="M276 358 L338 358 L338 452 L396 452" />
+      <path d="M804 236 L866 236 L866 330 L924 330" />
+      <path d="M804 452 L866 452 L866 358 L924 358" />
+    </g>
+  </g>
+</svg>

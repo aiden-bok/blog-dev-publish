@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>모노레포 on 휘발성 메모리 백업소</title><link>https://dev.route50.kr/tags/%EB%AA%A8%EB%85%B8%EB%A0%88%ED%8F%AC/</link><description>Recent content in 모노레포 on 휘발성 메모리 백업소</description><image><title>휘발성 메모리 백업소</title><url>https://dev.route50.kr/about/cover.jpg</url><link>https://dev.route50.kr/about/cover.jpg</link></image><generator>Hugo</generator><language>ko-kr</language><lastBuildDate>Mon, 02 Nov 2026 00:10:40 +0900</lastBuildDate><atom:link href="https://dev.route50.kr/tags/%EB%AA%A8%EB%85%B8%EB%A0%88%ED%8F%AC/index.xml" rel="self" type="application/rss+xml"/><item><title>2. 모노레포와 AI 코딩 도구: 컨텍스트 범위 정하기</title><link>https://dev.route50.kr/posts/monorepo-2/</link><pubDate>Mon, 02 Nov 2026 00:00:00 +0900</pubDate><guid>https://dev.route50.kr/posts/monorepo-2/</guid><description>AI 코딩 도구가 서버와 웹, 공용 코드를 한 번에 다루게 하는 모노레포 구성과, AGENTS.md와 시작 위치로 읽는 범위를 좁히는 방법을 정리했습니다.</description><content:encoded><![CDATA[<p><a href="#term-monorepo">모노레포</a>(Monorepo: 하나의 저장소)는 AI 코딩 도구가 서버, 웹, 공용 코드를 한 번에 보고 같은 변경 안에서 함께 고치게 해 주므로, 여러 앱에 걸친 작업에서 유리합니다. 다만 저장소가 커질수록 작업과 상관없는 파일과 지침이 도구의 <a href="#term-context-window">컨텍스트 윈도우</a>(Context window: AI가 한 번에 참고할 수 있는 입력 범위)를 채우기 때문에, 폴더별 지침 파일과 시작 위치로 읽는 범위를 좁혀야 합니다.</p>
+<p>저장소 구성과 워크스페이스 설정은 <a href="https://dev.route50.kr/posts/monorepo-1/">1. 모노레포란 무엇인가</a>에서 정리했습니다. 이 글은 그 구성 위에서 AI 도구를 어떻게 쓰는지를 다룹니다. 도구 동작은 Claude Code 공식 문서(2026-11-02 확인)를 기준으로 썼고, 직접 실행해 확인한 것은 아닙니다. 다른 도구는 지침 파일을 읽는 규칙이 다를 수 있습니다.</p>
+<h2 id="ai-도구에-모노레포가-유리한-이유">AI 도구에 모노레포가 유리한 이유</h2>
+<p>서버의 응답 형식을 바꾸면 웹의 호출 코드와 공용 타입도 함께 바뀌어야 합니다. 저장소가 나뉘어 있으면 AI 도구는 한 저장소만 열고 있으므로 다른 쪽 코드를 볼 수 없고, 사람이 다른 저장소의 내용을 붙여 넣어야 합니다. 한 저장소에 모두 있으면 도구가 API 정의, 서버 구현, 웹 호출부를 직접 읽고 한 번에 수정할 수 있습니다.</p>
+<p>monorepo.tools는 모노레포의 장점으로 AI 에이전트가 더 나은 컨텍스트와 피드백 루프를 얻는다는 점을 꼽고, Nx 문서도 여러 프로젝트를 가로지르는 변경에서 모노레포가 AI 에이전트에게 특히 유용하다고 설명합니다. (<a href="https://monorepo.tools/">monorepo.tools</a>, <a href="https://nx.dev/docs/getting-started/intro">Nx</a>) 코드를 한곳에 모은 구조가 사람에게만 편한 것이 아니라 도구에게도 같은 이유로 편하다는 뜻입니다.</p>
+<p>여기에 1편의 <code>turbo run build --affected</code> 같은 명령을 지침에 적어 두면 도구가 변경한 뒤 바뀐 패키지만 검증하는 흐름도 만들 수 있습니다.</p>
+<h2 id="시작-위치가-읽는-범위를-정한다">시작 위치가 읽는 범위를 정한다</h2>
+<p>Claude Code는 시작한 폴더와 그 위쪽 폴더의 <code>CLAUDE.md</code>를 실행할 때 읽고, 아래쪽 폴더의 파일은 필요할 때 읽습니다. 저장소 루트에서 시작하면 루트의 파일만 읽고 모든 파일에 접근할 수 있으며, 하위 폴더에서 시작하면 그 폴더와 상위 폴더의 파일을 읽고 접근 범위도 그 폴더로 한정됩니다. (<a href="https://code.claude.com/docs/en/large-codebases">Set up Claude Code in a monorepo or large codebase</a>)</p>
+<table>
+	<thead>
+			<tr>
+					<th>시작 위치</th>
+					<th>접근 범위</th>
+					<th>실행할 때 읽는 지침</th>
+					<th>맞는 작업</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>저장소 루트</td>
+					<td>모든 파일</td>
+					<td>루트 파일만, 하위 폴더는 필요할 때</td>
+					<td>여러 패키지에 걸친 작업</td>
+			</tr>
+			<tr>
+					<td>하위 폴더</td>
+					<td>그 폴더 아래만</td>
+					<td>그 폴더와 상위 폴더의 파일</td>
+					<td>한 앱 안에서 끝나는 작업</td>
+			</tr>
+	</tbody>
+</table>
+<figure>
+    <img loading="lazy" src="context-scope.svg"
+         alt="루트 AGENTS.md 아래에 apps/server, apps/web, apps/android가 있고, apps/web에서 시작하면 루트와 apps/web의 지침만 읽히고 나머지는 읽히지 않는다는 그림"/> <figcaption>
+            <p>그림 1. apps/web에서 시작했을 때 읽는 지침 (직접 제작)</p>
+        </figcaption>
+</figure>
+
+<p>그래서 웹 화면만 고칠 때는 <code>apps/web</code>에서 시작하고, 서버 API와 웹을 함께 바꿀 때는 루트에서 시작하는 식으로 작업 단위에 맞춰 위치를 고릅니다.</p>
+<h2 id="루트와-폴더별-지침-파일-나누기">루트와 폴더별 지침 파일 나누기</h2>
+<p><a href="#term-agents-md">AGENTS.md</a>는 AI 코딩 도구에게 빌드 방법, 테스트 명령, 코딩 규칙을 알려 주는 Markdown 파일입니다. 모노레포에서는 패키지마다 따로 둘 수 있고, 충돌하면 편집하는 파일에 가장 가까운 것이 우선합니다. (<a href="https://agents.md/">AGENTS.md</a>) 루트에는 모든 앱에 공통인 규칙을, 각 앱 폴더에는 그 앱의 규칙만 적습니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-markdown" data-lang="markdown"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">&lt;!-- 루트 AGENTS.md --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 패키지 관리자는 pnpm만 씁니다.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 변경한 뒤에는 <span style="color:#a5d6ff">`pnpm turbo run test --affected`</span>로 검증합니다.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 커밋 제목 앞에 앱 이름을 붙입니다. (예: <span style="color:#a5d6ff">`web: 로그인 화면 수정`</span>)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-markdown" data-lang="markdown"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">&lt;!-- apps/web/AGENTS.md --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 컴포넌트는 <span style="color:#a5d6ff">`src/components/`</span>에 두고, 서버 호출은 <span style="color:#a5d6ff">`packages/shared`</span>의 타입을 씁니다.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 스타일은 CSS 모듈만 씁니다.
+</span></span></code></pre></div><p>Claude Code는 <code>AGENTS.md</code>만 있고 <code>CLAUDE.md</code>가 없으면 <code>AGENTS.md</code>를 읽고, 둘 다 있으면 <code>CLAUDE.md</code>만 읽습니다. <code>AGENTS.md</code>를 직접 읽는 기능은 Claude Code v2.1.277 이상이 필요합니다. 두 도구를 함께 쓰려면 <code>CLAUDE.md</code> 안에서 <code>AGENTS.md</code>를 가져오게 하면 됩니다. (<a href="https://code.claude.com/docs/en/memory">How Claude remembers your project</a>)</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-markdown" data-lang="markdown"><span style="display:flex;"><span><span style="color:#ffa657">@AGENTS</span>.md
+</span></span></code></pre></div><h2 id="다른-폴더가-필요할-때-접근-범위-넓히기">다른 폴더가 필요할 때 접근 범위 넓히기</h2>
+<p><code>apps/server</code>에서 시작했는데 <code>packages/shared</code>의 타입도 고쳐야 한다면 그 폴더에 접근할 권한을 추가합니다. 실행할 때 <code>--add-dir</code>를 주거나 <code>.claude/settings.json</code>의 <code>additionalDirectories</code>에 적습니다. 문서에 따르면 같은 방법으로 별도로 내려받은 다른 저장소에도 접근할 수 있습니다. (<a href="https://code.claude.com/docs/en/large-codebases">Set up Claude Code in a monorepo or large codebase</a>)</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>claude --add-dir ../shared
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#7ee787">&#34;permissions&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#7ee787">&#34;additionalDirectories&#34;</span>: [<span style="color:#a5d6ff">&#34;../shared&#34;</span>, <span style="color:#a5d6ff">&#34;../web&#34;</span>]
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>additionalDirectories</code> 설정으로 추가한 폴더의 <code>CLAUDE.md</code>와 규칙은 읽히지 않고, <code>--add-dir</code>로 추가해도 환경 변수 <code>CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1</code>을 켜야 읽힙니다. 폴더에 접근할 수 있는 것과 그 폴더의 지침을 읽는 것은 다른 문제입니다.</p>
+<h2 id="불필요한-파일과-지침-줄이기">불필요한 파일과 지침 줄이기</h2>
+<p>다른 팀이나 옛 코드의 지침이 따라 읽히면 컨텍스트만 낭비됩니다. <code>claudeMdExcludes</code>는 경로 패턴에 맞는 <code>CLAUDE.md</code>를 읽지 않게 하고, <code>permissions.deny</code>의 <code>Read</code> 규칙은 빌드 결과나 외부 코드를 열지 못하게 막습니다. (<a href="https://code.claude.com/docs/en/large-codebases">Set up Claude Code in a monorepo or large codebase</a>)</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#7ee787">&#34;claudeMdExcludes&#34;</span>: [<span style="color:#a5d6ff">&#34;**/packages/legacy-*/**&#34;</span>],
+</span></span><span style="display:flex;"><span>  <span style="color:#7ee787">&#34;permissions&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#7ee787">&#34;deny&#34;</span>: [<span style="color:#a5d6ff">&#34;Read(./**/dist/**/*)&#34;</span>, <span style="color:#a5d6ff">&#34;Read(./**/vendor/**/*)&#34;</span>]
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>.gitignore</code>에 적힌 <code>node_modules/</code>나 <code>dist/</code>는 검색 결과에서 이미 빠지므로, 저장소에 커밋된 생성 코드와 외부 코드에 이 규칙을 씁니다.</p>
+<h2 id="여러-패키지에-걸친-변경은-계획부터">여러 패키지에 걸친 변경은 계획부터</h2>
+<p>공용 타입을 바꾸고 그것을 쓰는 모든 호출부를 고치는 작업은 한 세션에서 전체를 맡기는 편이 결정이 일관됩니다. 문서는 편집 전에 계획 모드로 계획을 세우라고 권하는데, 긴 작업에서는 컨텍스트가 압축되어도 계획 파일이 다시 주입되기 때문입니다. (<a href="https://code.claude.com/docs/en/large-codebases">Set up Claude Code in a monorepo or large codebase</a>)</p>
+<p>서버, 웹, 안드로이드, iOS를 모두 다루는 제품이라면 한 번에 네 앱을 모두 고치게 하기보다 API 명세를 먼저 바꾸고 앱별로 나눠 확인하는 쪽이 검토하기 쉽습니다. 이 순서는 문서의 내용이 아니라 변경을 <a href="#term-pr">PR</a>(Pull Request: 변경을 병합해 달라는 요청)로 검토하는 입장에서 정한 제 기준입니다.</p>
+<h2 id="모노레포가-아니어도-ai-도구는-쓸-수-있다">모노레포가 아니어도 AI 도구는 쓸 수 있다</h2>
+<p>저장소가 나뉘어 있어도 <code>--add-dir</code>로 다른 저장소를 함께 열 수 있으므로 모노레포가 AI 도구의 필수 조건은 아닙니다. 모노레포의 이점은 접근 권한보다 변경이 하나의 커밋과 PR로 묶이고, 도구가 검증 명령까지 한곳에서 돌릴 수 있다는 점에 있습니다. 저장소를 합치는 비용(CI 설정, 권한 분리, 이력 이전)이 그 이점보다 크다면 나눠 둔 채로 쓰는 것도 맞는 선택입니다.</p>
+<h2 id="참고-자료">참고 자료</h2>
+<ul>
+<li><a href="https://monorepo.tools/">Monorepo Tools</a>, monorepo.tools, 2026-11-02 확인</li>
+<li><a href="https://nx.dev/docs/getting-started/intro">Intro to Nx</a>, Nx Docs, 2026-11-02 확인</li>
+<li><a href="https://agents.md/">AGENTS.md</a>, agents.md, 2026-11-02 확인</li>
+<li><a href="https://code.claude.com/docs/en/memory">How Claude remembers your project</a>, Claude Code Docs, 2026-11-02 확인</li>
+<li><a href="https://code.claude.com/docs/en/large-codebases">Set up Claude Code in a monorepo or large codebase</a>, Claude Code Docs, 2026-11-02 확인</li>
+</ul>
+<h2 id="용어-설명">용어 설명</h2>
+<h3 id="term-monorepo">모노레포</h3>
+<p>Monorepo. 관계가 분명한 여러 프로젝트를 하나의 저장소에서 관리하는 방식입니다. (<a href="https://monorepo.tools/">monorepo.tools</a>)</p>
+<h3 id="term-context-window">컨텍스트 윈도우</h3>
+<p>Context window. AI 모델이 한 번의 대화에서 참고할 수 있는 입력의 범위입니다. 지침과 읽은 파일이 이 범위를 차지합니다. (<a href="https://code.claude.com/docs/en/context-window">Claude Code Docs</a>)</p>
+<h3 id="term-agents-md">AGENTS.md</h3>
+<p>AI 코딩 도구용 지침을 적는 Markdown 형식입니다. 사람이 읽는 README와 달리 빌드 방법, 테스트, 규칙을 도구에게 알려 줍니다. (<a href="https://agents.md/">agents.md</a>)</p>
+<h3 id="term-pr">PR</h3>
+<p>Pull Request. 작업 브랜치의 변경을 다른 브랜치에 합쳐 달라고 요청하고 검토하는 GitHub의 기능입니다. (<a href="https://docs.github.com/en/pull-requests">GitHub Docs</a>)</p>
+]]></content:encoded></item><item><title>1. 모노레포란 무엇인가: 구조와 워크스페이스</title><link>https://dev.route50.kr/posts/monorepo-1/</link><pubDate>Mon, 02 Nov 2026 00:00:00 +0900</pubDate><guid>https://dev.route50.kr/posts/monorepo-1/</guid><description>서버, 웹, 모바일 앱 소스를 한 저장소에 두는 모노레포의 정의와 폴더 구성, pnpm 워크스페이스와 Turborepo 설정 방법을 정리했습니다.</description><content:encoded><![CDATA[<p><a href="#term-monorepo">모노레포</a>(Monorepo: 하나의 저장소)는 서로 관계가 분명한 여러 프로젝트를 하나의 Git 저장소에서 관리하는 방식입니다. 서버, 웹, 모바일 앱을 <code>server/</code>, <code>web/</code>, <code>android/</code> 같은 폴더로 나눠 한 저장소에 두고, 공용 코드는 따로 패키지로 배포하지 않고 폴더째 가져다 씁니다. 저장소를 합치는 것만으로는 부족하고, 프로젝트 사이의 의존 관계를 도구가 알 수 있게 만들어야 모노레포라고 부를 수 있습니다.</p>
+<p>이 글은 2편 중 1편으로, 모노레포의 정의와 폴더 구성, 워크스페이스 설정까지 다룹니다. AI 도구와의 관계는 <a href="https://dev.route50.kr/posts/monorepo-2/">2. 모노레포와 AI 코딩 도구</a>에서 이어갑니다. 설정 예시는 각 공식 문서의 내용을 기준으로 정리했고, 이 글을 쓰는 환경에서 직접 실행해 확인한 것은 아닙니다.</p>
+<h2 id="모노레포는-모노리스와-무엇이-다른가">모노레포는 모노리스와 무엇이 다른가</h2>
+<p>모노레포는 저장소를 하나로 합치는 방식이고, <a href="#term-monolith">모노리스</a>(Monolith: 하나로 뭉친 단일 애플리케이션)는 애플리케이션을 하나로 합치는 설계 방식입니다. 둘은 다른 이야기입니다. 모노레포 도구를 소개하는 monorepo.tools는 모노레포를 &ldquo;관계가 분명한 여러 프로젝트가 들어 있는 하나의 저장소&quot;로 설명하고, 그저 코드가 한곳에 모여 있을 뿐인 저장소와 구분합니다. (<a href="https://monorepo.tools/">monorepo.tools</a>)</p>
+<p>한 저장소 안에서도 서버와 웹은 각자 빌드되고 각자 배포됩니다. 달라지는 것은 버전 관리와 변경 단위입니다. 서버의 응답 형식을 바꾸면서 웹의 호출 코드도 같은 커밋에서 고칠 수 있습니다.</p>
+<p>반대 개념은 <a href="#term-polyrepo">폴리레포</a>(Polyrepo: 프로젝트마다 저장소를 따로 두는 방식)입니다. 서버, 웹, 안드로이드, iOS를 모두 혼자 개발하는 경우에도 저장소가 넷이면 공용 타입이나 API 규약을 바꿀 때마다 저장소 넷을 오가며 브랜치와 PR을 따로 만들어야 합니다.</p>
+<figure>
+    <img loading="lazy" src="repo-structure.svg"
+         alt="왼쪽은 server, web, android, ios가 각각 별도 저장소이고 API 타입을 바꾸면 저장소 4곳에서 PR 4개가 필요하다는 그림. 오른쪽은 한 저장소 안에서 packages/shared를 네 앱이 함께 쓰고 PR 1개로 끝난다는 그림"/> <figcaption>
+            <p>그림 1. 여러 저장소와 하나의 저장소 비교 (직접 제작)</p>
+        </figcaption>
+</figure>
+
+<h2 id="모노레포의-장점과-비용">모노레포의 장점과 비용</h2>
+<p>monorepo.tools가 꼽는 장점은 패키지를 발행하거나 버전을 관리하지 않고 코드를 공유할 수 있다는 점, 여러 프로젝트에 걸친 변경을 하나의 커밋으로 묶을 수 있다는 점, 규칙을 한곳에서 통일할 수 있다는 점입니다. (<a href="https://monorepo.tools/">monorepo.tools</a>)</p>
+<p>비용도 있습니다. 저장소가 커질수록 전체 빌드와 테스트 시간이 늘어나므로, 바뀐 부분만 골라 실행하는 도구가 필요해집니다. 접근 권한도 저장소 단위라서, 일부 폴더만 외부에 보여 줘야 하는 상황에는 맞지 않습니다. 혼자 또는 소수 인원이 한 제품의 여러 앱을 만드는 경우에는 장점이 크고, 서로 무관한 프로젝트를 억지로 합치면 얻는 것이 없습니다.</p>
+<h2 id="폴더-구성-예시">폴더 구성 예시</h2>
+<p>앱은 <code>apps/</code>, 앱들이 함께 쓰는 코드는 <code>packages/</code> 아래에 두는 구성이 흔합니다. 이름은 관례일 뿐 정해진 규칙은 아닙니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>my-product/
+</span></span><span style="display:flex;"><span>├── apps/
+</span></span><span style="display:flex;"><span>│   ├── server/          # 백엔드 API
+</span></span><span style="display:flex;"><span>│   ├── web/             # 프런트엔드
+</span></span><span style="display:flex;"><span>│   ├── android/         # 안드로이드 앱 (Gradle 프로젝트)
+</span></span><span style="display:flex;"><span>│   └── ios/             # iOS 앱 (Xcode 프로젝트)
+</span></span><span style="display:flex;"><span>├── packages/
+</span></span><span style="display:flex;"><span>│   ├── shared/          # 공용 타입, 검증 규칙
+</span></span><span style="display:flex;"><span>│   └── api-schema/      # API 명세 (OpenAPI 등)
+</span></span><span style="display:flex;"><span>├── AGENTS.md
+</span></span><span style="display:flex;"><span>├── package.json
+</span></span><span style="display:flex;"><span>├── pnpm-workspace.yaml
+</span></span><span style="display:flex;"><span>└── turbo.json
+</span></span></code></pre></div><p>안드로이드와 iOS 프로젝트는 각각 Gradle과 Xcode로 빌드하므로 JavaScript 패키지 관리자의 워크스페이스에는 들어가지 않습니다. 이 둘은 폴더로만 함께 두고, 서버와 공유하는 부분은 <code>api-schema</code> 같은 명세 파일에서 코드를 생성해 나눠 쓰는 식으로 연결하는 것이 현실적입니다.</p>
+<h2 id="pnpm-워크스페이스로-패키지-연결하기">pnpm 워크스페이스로 패키지 연결하기</h2>
+<p><a href="#term-workspace">워크스페이스</a>(Workspace: 한 저장소 안의 여러 패키지를 하나로 묶어 설치하고 서로 참조하게 하는 기능)는 npm, Yarn, pnpm이 모두 지원합니다. pnpm에서는 저장소 루트의 <code>pnpm-workspace.yaml</code>에 패키지가 있는 폴더를 적습니다. (<a href="https://pnpm.io/workspaces">pnpm Workspace</a>)</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#7ee787">packages</span>:<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681">  </span>- <span style="color:#a5d6ff">apps/*</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681">  </span>- <span style="color:#a5d6ff">packages/*</span><span style="color:#6e7681">
+</span></span></span></code></pre></div><p>패키지끼리 참조할 때는 <code>workspace:</code> 프로토콜을 씁니다. <code>workspace:*</code>로 적으면 pnpm이 레지스트리가 아니라 저장소 안의 로컬 패키지로만 해석합니다. 발행할 때는 이 값이 실제 버전 번호로 바뀝니다. (<a href="https://pnpm.io/workspaces">pnpm Workspace</a>)</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#7ee787">&#34;name&#34;</span>: <span style="color:#a5d6ff">&#34;web&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#7ee787">&#34;dependencies&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#7ee787">&#34;shared&#34;</span>: <span style="color:#a5d6ff">&#34;workspace:*&#34;</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>특정 패키지만 실행하려면 <code>--filter</code>를 씁니다. <code>pnpm --filter web test</code>는 <code>web</code>만, <code>pnpm --filter &quot;...[origin/main]&quot; test</code>는 <code>origin/main</code> 이후 바뀐 패키지와 그것에 의존하는 패키지를 대상으로 합니다. (<a href="https://pnpm.io/filtering">pnpm Filtering</a>)</p>
+<h2 id="turborepo로-빌드-순서와-캐시-관리하기">Turborepo로 빌드 순서와 캐시 관리하기</h2>
+<p>패키지가 늘면 어느 것을 먼저 빌드해야 하는지, 바뀌지 않은 것은 건너뛸 수 있는지가 문제가 됩니다. Turborepo는 기존 <code>package.json</code>의 스크립트를 그대로 쓰면서, 루트의 <code>turbo.json</code> 하나로 작업 순서와 캐시를 정하는 빌드 도구입니다. (<a href="https://turborepo.dev/docs">Turborepo</a>)</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#7ee787">&#34;tasks&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#7ee787">&#34;build&#34;</span>: {
+</span></span><span style="display:flex;"><span>      <span style="color:#7ee787">&#34;dependsOn&#34;</span>: [<span style="color:#a5d6ff">&#34;^build&#34;</span>],
+</span></span><span style="display:flex;"><span>      <span style="color:#7ee787">&#34;outputs&#34;</span>: [<span style="color:#a5d6ff">&#34;dist/**&#34;</span>]
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>dependsOn</code>의 <code>^build</code>는 어떤 패키지를 빌드하기 전에 그 패키지가 의존하는 패키지의 <code>build</code>를 먼저 실행하라는 뜻입니다. <code>outputs</code>는 캐시에 저장할 결과 파일로, 적지 않으면 파일이 캐시되지 않아 캐시가 적중해도 결과물이 복원되지 않습니다. (<a href="https://turborepo.dev/docs/crafting-your-repository/configuring-tasks">Configuring tasks</a>)</p>
+<p><code>turbo run build --affected</code>는 현재 브랜치에서 바뀐 패키지와 영향을 받는 패키지만 실행합니다. 기본 비교 대상은 <code>main</code>과 <code>HEAD</code>입니다. (<a href="https://turborepo.dev/docs/reference/run">turbo run</a>)</p>
+<p>Nx도 같은 역할을 하는 도구로, 로컬 캐시와 변경 영향 범위 계산(affected)을 핵심 기능으로 둡니다. (<a href="https://nx.dev/docs/getting-started/intro">Nx</a>) 두 도구 중 어느 쪽이 낫다고 단정하기보다, 처음에는 pnpm 워크스페이스만으로 시작하고 빌드가 느려질 때 도입하는 순서를 권합니다.</p>
+<h2 id="github-actions에서-바뀐-폴더만-실행하기">GitHub Actions에서 바뀐 폴더만 실행하기</h2>
+<p><a href="#term-ci">CI</a>(Continuous Integration: 지속적 통합)도 저장소 전체가 아니라 바뀐 부분 위주로 돌려야 시간이 늘어나지 않습니다. GitHub Actions에서는 워크플로 <code>paths</code> 필터로 특정 폴더가 바뀔 때만 실행되게 할 수 있습니다. (<a href="https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax">Workflow syntax</a>)</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#7ee787">on</span>:<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681">  </span><span style="color:#7ee787">pull_request</span>:<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681">    </span><span style="color:#7ee787">paths</span>:<span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681">      </span>- <span style="color:#a5d6ff">&#39;apps/web/**&#39;</span><span style="color:#6e7681">
+</span></span></span><span style="display:flex;"><span><span style="color:#6e7681">      </span>- <span style="color:#a5d6ff">&#39;packages/shared/**&#39;</span><span style="color:#6e7681">
+</span></span></span></code></pre></div><p>주의할 점이 있습니다. 필터 때문에 워크플로가 건너뛰어지면 그 검사는 대기 상태로 남고, 브랜치 보호 규칙에서 필수 검사로 지정했다면 PR이 병합되지 않습니다. 필수 검사로 걸 워크플로는 <code>paths</code> 필터를 쓰지 않거나, 워크플로 안에서 변경 여부를 판단하는 방식으로 설계해야 합니다.</p>
+<h2 id="참고-자료">참고 자료</h2>
+<ul>
+<li><a href="https://monorepo.tools/">Monorepo Tools</a>, monorepo.tools, 2026-11-02 확인</li>
+<li><a href="https://pnpm.io/workspaces">Workspace</a>, pnpm Docs, 2026-11-02 확인</li>
+<li><a href="https://pnpm.io/filtering">Filtering</a>, pnpm Docs, 2026-11-02 확인</li>
+<li><a href="https://turborepo.dev/docs">Turborepo Introduction</a>, Turborepo Docs, 2026-11-02 확인</li>
+<li><a href="https://turborepo.dev/docs/crafting-your-repository/configuring-tasks">Configuring tasks</a>, Turborepo Docs, 2026-11-02 확인</li>
+<li><a href="https://turborepo.dev/docs/reference/run">turbo run</a>, Turborepo Docs, 2026-11-02 확인</li>
+<li><a href="https://nx.dev/docs/getting-started/intro">Intro to Nx</a>, Nx Docs, 2026-11-02 확인</li>
+<li><a href="https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax">Workflow syntax for GitHub Actions</a>, GitHub Docs, 2026-11-02 확인</li>
+</ul>
+<h2 id="용어-설명">용어 설명</h2>
+<h3 id="term-monorepo">모노레포</h3>
+<p>Monorepo. 관계가 분명한 여러 프로젝트를 하나의 저장소에서 관리하는 방식입니다. (<a href="https://monorepo.tools/">monorepo.tools</a>)</p>
+<h3 id="term-monolith">모노리스</h3>
+<p>Monolith. 여러 기능을 나누지 않고 하나의 애플리케이션으로 묶은 구조입니다. 저장소를 하나로 합치는 모노레포와는 다른 개념입니다. (<a href="https://monorepo.tools/">monorepo.tools</a>)</p>
+<h3 id="term-polyrepo">폴리레포</h3>
+<p>Polyrepo. 프로젝트마다 Git 저장소를 따로 두는 방식입니다. 모노레포와 비교할 때 쓰는 말입니다. (<a href="https://monorepo.tools/">monorepo.tools</a>)</p>
+<h3 id="term-workspace">워크스페이스</h3>
+<p>Workspace. 한 저장소 안의 여러 패키지를 함께 설치하고 서로 참조하게 하는 패키지 관리자 기능입니다. (<a href="https://pnpm.io/workspaces">pnpm Workspace</a>)</p>
+<h3 id="term-ci">CI</h3>
+<p>Continuous Integration(지속적 통합). 코드를 합칠 때마다 빌드와 테스트를 자동으로 실행하는 과정입니다. (<a href="https://docs.github.com/en/actions">GitHub Actions 문서</a>)</p>
+]]></content:encoded></item></channel></rss>

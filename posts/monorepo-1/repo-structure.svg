@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" role="img" aria-labelledby="diagram-title diagram-desc">
+  <title id="diagram-title">여러 저장소와 하나의 저장소 비교</title>
+  <desc id="diagram-desc">왼쪽은 서버, 웹, 안드로이드, iOS가 각각 별도 저장소여서 공용 타입을 바꾸면 저장소 네 곳을 고쳐야 하는 구조. 오른쪽은 한 저장소 안에서 서버와 웹, 안드로이드, iOS가 packages/shared를 함께 쓰는 구조</desc>
+  <defs>
+    <filter id="card-shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.12" />
+    </filter>
+    <marker id="arrow" viewBox="0 0 14 14" refX="12" refY="7" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M7 2 L12 7 L7 12" fill="none" stroke="#475569" stroke-width="2.5" stroke-linejoin="miter" stroke-linecap="butt" />
+    </marker>
+  </defs>
+  <rect width="1200" height="600" rx="24" fill="#f8fafc" />
+  <rect x="1" y="1" width="1198" height="598" rx="24" fill="none" stroke="#e2e8f0" stroke-width="2" />
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <text x="64" y="84" font-size="34" font-weight="800" fill="#0f172a">저장소를 나누는 방식 두 가지</text>
+    <text x="64" y="124" font-size="24" font-weight="500" fill="#64748b">공용 코드가 바뀔 때 몇 곳을 고쳐야 하는지가 다릅니다</text>
+
+    <text x="64" y="188" font-size="28" font-weight="700" fill="#7c2d12">여러 저장소</text>
+    <g filter="url(#card-shadow)">
+      <rect x="64" y="212" width="252" height="76" rx="14" fill="#ffffff" stroke="#fdba74" stroke-width="2" />
+      <rect x="340" y="212" width="252" height="76" rx="14" fill="#ffffff" stroke="#fdba74" stroke-width="2" />
+      <rect x="64" y="312" width="252" height="76" rx="14" fill="#ffffff" stroke="#fdba74" stroke-width="2" />
+      <rect x="340" y="312" width="252" height="76" rx="14" fill="#ffffff" stroke="#fdba74" stroke-width="2" />
+    </g>
+    <g font-size="26" font-weight="700" fill="#7c2d12" text-anchor="middle">
+      <text x="190" y="260">server-repo</text>
+      <text x="466" y="260">web-repo</text>
+      <text x="190" y="360">android-repo</text>
+      <text x="466" y="360">ios-repo</text>
+    </g>
+    <rect x="64" y="424" width="528" height="84" rx="14" fill="#ffedd5" stroke="#ea580c" stroke-width="2" />
+    <text x="328" y="460" font-size="24" font-weight="700" fill="#7c2d12" text-anchor="middle">API 타입 한 줄을 바꾸면</text>
+    <text x="328" y="492" font-size="24" font-weight="500" fill="#9a3412" text-anchor="middle">저장소 4곳에서 PR 4개</text>
+
+    <line x1="616" y1="170" x2="616" y2="508" stroke="#cbd5e1" stroke-width="2" />
+
+    <text x="656" y="188" font-size="28" font-weight="700" fill="#14532d">저장소 하나</text>
+    <rect x="656" y="212" width="480" height="296" rx="18" fill="#f0fdf4" stroke="#16a34a" stroke-width="2" />
+    <g filter="url(#card-shadow)">
+      <rect x="680" y="236" width="96" height="76" rx="12" fill="#ffffff" stroke="#86efac" stroke-width="2" />
+      <rect x="788" y="236" width="96" height="76" rx="12" fill="#ffffff" stroke="#86efac" stroke-width="2" />
+      <rect x="896" y="236" width="104" height="76" rx="12" fill="#ffffff" stroke="#86efac" stroke-width="2" />
+      <rect x="1012" y="236" width="100" height="76" rx="12" fill="#ffffff" stroke="#86efac" stroke-width="2" />
+      <rect x="680" y="396" width="432" height="76" rx="12" fill="#ffffff" stroke="#16a34a" stroke-width="2" />
+    </g>
+    <g font-size="22" font-weight="700" fill="#14532d" text-anchor="middle">
+      <text x="728" y="280">server</text>
+      <text x="836" y="280">web</text>
+      <text x="948" y="280">android</text>
+      <text x="1062" y="280">ios</text>
+      <text x="896" y="442" font-size="24">packages/shared</text>
+    </g>
+    <g stroke="#475569" stroke-width="2.5" stroke-linecap="butt" fill="none" marker-end="url(#arrow)">
+      <line x1="728" y1="390" x2="728" y2="320" />
+      <line x1="836" y1="390" x2="836" y2="320" />
+      <line x1="948" y1="390" x2="948" y2="320" />
+      <line x1="1062" y1="390" x2="1062" y2="320" />
+    </g>
+    <text x="656" y="552" font-size="24" font-weight="700" fill="#14532d">공용 코드 수정 1번, PR 1개</text>
+    <text x="64" y="552" font-size="22" font-weight="500" fill="#64748b">화살표는 shared 코드가 각 앱에 쓰이는 방향</text>
+  </g>
+</svg>

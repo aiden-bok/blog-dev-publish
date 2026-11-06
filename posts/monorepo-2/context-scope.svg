@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" role="img" aria-labelledby="diagram-title diagram-desc">
+  <title id="diagram-title">폴더별 AGENTS.md와 AI 도구의 읽기 범위</title>
+  <desc id="diagram-desc">저장소 루트의 AGENTS.md 아래에 apps/server, apps/web, apps/android 폴더가 각각 AGENTS.md를 가지고 있다. apps/web에서 AI 도구를 시작하면 루트와 apps/web의 파일만 읽히고 나머지 두 폴더의 파일은 읽히지 않는다</desc>
+  <defs>
+    <filter id="card-shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.12" />
+    </filter>
+    <marker id="arrow" viewBox="0 0 14 14" refX="12" refY="7" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M7 2 L12 7 L7 12" fill="none" stroke="#475569" stroke-width="2.5" stroke-linejoin="miter" stroke-linecap="butt" />
+    </marker>
+  </defs>
+  <rect width="1200" height="560" rx="24" fill="#f8fafc" />
+  <rect x="1" y="1" width="1198" height="558" rx="24" fill="none" stroke="#e2e8f0" stroke-width="2" />
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <text x="64" y="84" font-size="34" font-weight="800" fill="#0f172a">apps/web에서 시작했을 때 읽는 지침</text>
+    <text x="64" y="124" font-size="24" font-weight="500" fill="#64748b">시작한 폴더와 그 위쪽 폴더의 파일만 처음부터 읽힙니다</text>
+
+    <g filter="url(#card-shadow)">
+      <rect x="400" y="164" width="400" height="88" rx="16" fill="#ede9fe" stroke="#7c3aed" stroke-width="2.5" />
+      <rect x="64" y="340" width="336" height="88" rx="16" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2" />
+      <rect x="432" y="340" width="336" height="88" rx="16" fill="#ede9fe" stroke="#7c3aed" stroke-width="2.5" />
+      <rect x="800" y="340" width="336" height="88" rx="16" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2" />
+    </g>
+
+    <circle cx="436" cy="208" r="20" fill="#7c3aed" />
+    <text x="436" y="216" font-size="22" font-weight="800" fill="#ffffff" text-anchor="middle">1</text>
+    <text x="472" y="200" font-size="26" font-weight="700" fill="#2e1065">루트 AGENTS.md</text>
+    <text x="472" y="236" font-size="22" fill="#5b21b6">공통 규칙</text>
+
+    <text x="232" y="378" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="24" font-weight="700" fill="#475569" text-anchor="middle">apps/server</text>
+    <text x="232" y="412" font-size="22" fill="#475569" text-anchor="middle">읽지 않음</text>
+
+    <circle cx="468" cy="384" r="20" fill="#7c3aed" />
+    <text x="468" y="392" font-size="22" font-weight="800" fill="#ffffff" text-anchor="middle">2</text>
+    <text x="504" y="378" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="24" font-weight="700" fill="#2e1065">apps/web</text>
+    <text x="504" y="412" font-size="22" fill="#5b21b6">여기서 시작</text>
+
+    <text x="968" y="378" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="24" font-weight="700" fill="#475569" text-anchor="middle">apps/android</text>
+    <text x="968" y="412" font-size="22" fill="#475569" text-anchor="middle">읽지 않음</text>
+
+    <g stroke="#475569" stroke-width="2.5" stroke-linecap="butt" fill="none" marker-end="url(#arrow)">
+      <line x1="600" y1="256" x2="600" y2="300" />
+      <line x1="600" y1="300" x2="600" y2="334" />
+    </g>
+    <g stroke="#94a3b8" stroke-width="2.5" stroke-linecap="butt" fill="none">
+      <path d="M600 300 H232 V334" stroke-dasharray="2.5 5" />
+      <path d="M600 300 H968 V334" stroke-dasharray="2.5 5" />
+    </g>
+
+    <rect x="64" y="476" width="28" height="28" rx="6" fill="#ede9fe" stroke="#7c3aed" stroke-width="2.5" />
+    <text x="104" y="499" font-size="22" fill="#334155">처음부터 읽는 지침</text>
+    <rect x="368" y="476" width="28" height="28" rx="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2" />
+    <text x="408" y="499" font-size="22" fill="#334155">작업과 무관해서 읽지 않는 지침</text>
+  </g>
+</svg>

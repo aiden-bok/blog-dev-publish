@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="cover-title cover-desc">
+  <title id="cover-title">Ollama 로컬 모델 실행기 cover</title>
+  <desc id="cover-desc">크림색 배경 위쪽에 제목 'Ollama 로컬 모델 실행기', 아래쪽에 ollama run과 curl 명령이 보이는 터미널 창 두 개가 겹쳐 있는 그림</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff7ed" />
+      <stop offset="1" stop-color="#fed7aa" />
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0 H0 V40" fill="none" stroke="#9a3412" stroke-opacity="0.07" stroke-width="1.5" />
+    </pattern>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#431407" flood-opacity="0.35" />
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect width="1200" height="630" fill="url(#grid)" />
+  <circle cx="1080" cy="90" r="190" fill="#fb923c" fill-opacity="0.25" />
+
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <rect x="72" y="64" width="240" height="44" rx="22" fill="#9a3412" />
+    <text x="192" y="93" font-size="22" font-weight="700" fill="#ffedd5" text-anchor="middle">Ollama · 로컬 LLM</text>
+    <text x="72" y="196" font-size="64" font-weight="800" fill="#431407">로컬 모델 실행기 Ollama</text>
+    <text x="72" y="254" font-size="30" font-weight="600" fill="#9a3412">설치 · 모델 받기 · REST API 호출</text>
+    <text x="72" y="590" font-size="22" font-weight="600" fill="#9a3412">휘발성 메모리 백업소</text>
+    <text x="294" y="590" font-size="22" font-weight="400" fill="#7c2d12">dev.route50.kr</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <g transform="translate(260 330)">
+      <rect width="460" height="220" rx="18" fill="#1c1917" stroke="#44403c" stroke-width="2" />
+      <rect width="460" height="44" rx="18" fill="#292524" />
+      <rect y="26" width="460" height="18" fill="#292524" />
+      <circle cx="28" cy="22" r="7" fill="#f87171" />
+      <circle cx="52" cy="22" r="7" fill="#fbbf24" />
+      <circle cx="76" cy="22" r="7" fill="#34d399" />
+      <g font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="24">
+        <text x="28" y="94" fill="#fdba74">$ ollama pull gemma4:e2b</text>
+        <text x="28" y="136" fill="#fdba74">$ ollama run gemma4:e2b</text>
+        <text x="28" y="178" fill="#a8a29e">&gt;&gt;&gt; Say hello</text>
+      </g>
+    </g>
+    <g transform="translate(750 400)">
+      <rect width="360" height="170" rx="18" fill="#0f172a" stroke="#334155" stroke-width="2" />
+      <rect width="360" height="44" rx="18" fill="#1e293b" />
+      <rect y="26" width="360" height="18" fill="#1e293b" />
+      <circle cx="28" cy="22" r="7" fill="#f87171" />
+      <circle cx="52" cy="22" r="7" fill="#fbbf24" />
+      <circle cx="76" cy="22" r="7" fill="#34d399" />
+      <g font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="22">
+        <text x="28" y="94" fill="#7dd3fc">curl :11434/api/chat</text>
+        <text x="28" y="134" fill="#86efac">done: true</text>
+      </g>
+    </g>
+  </g>
+</svg>

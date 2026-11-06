@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="diagram-title diagram-desc">
+  <title id="diagram-title">로컬 LLM 구동 아키텍처</title>
+  <desc id="diagram-desc">애플리케이션 계층에서 시작하여 OpenAI 규격 API를 거쳐 로컬 추론 엔진과 하드웨어 메모리(VRAM)로 이어지는 3단계 계층 구조</desc>
+  <defs>
+    <filter id="card-shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#0f172a" flood-opacity="0.08" />
+    </filter>
+    <marker id="arrow" viewBox="0 0 14 14" refX="12" refY="7" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M7 2 L12 7 L7 12" fill="none" stroke="#475569" stroke-width="2.5" stroke-linejoin="miter" stroke-linecap="butt" />
+    </marker>
+  </defs>
+
+  <!-- 바탕 카드 -->
+  <rect width="1200" height="620" rx="24" fill="#f8fafc" />
+  <rect x="1" y="1" width="1198" height="618" rx="24" fill="none" stroke="#e2e8f0" stroke-width="2" />
+
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <!-- 그림 제목과 설명 -->
+    <text x="64" y="74" font-size="32" font-weight="800" fill="#0f172a">로컬 LLM 구동 계층 아키텍처</text>
+    <text x="64" y="110" font-size="22" font-weight="500" fill="#64748b">애플리케이션 요청이 추론 엔진을 거쳐 하드웨어 메모리에 매핑되는 흐름</text>
+
+    <!-- 1단계: 애플리케이션 계층 -->
+    <g filter="url(#card-shadow)">
+      <rect x="64" y="148" width="1072" height="104" rx="16" fill="#ffffff" stroke="#c7d2fe" stroke-width="2" />
+    </g>
+    <rect x="88" y="172" width="140" height="34" rx="8" fill="#e0e7ff" />
+    <text x="158" y="195" font-size="18" font-weight="700" fill="#4338ca" text-anchor="middle">애플리케이션 계층</text>
+    <text x="88" y="234" font-size="24" font-weight="700" fill="#1e1b4b">사용자 인터페이스 및 개발 프레임워크</text>
+    <text x="560" y="234" font-size="20" font-weight="500" fill="#475569">(Open WebUI, Python 클라이언트, LangChain, LlamaIndex)</text>
+
+    <!-- 1단계 -> 2단계 연결선과 프로토콜 라벨 -->
+    <g stroke="#475569" stroke-width="2.5" stroke-linecap="butt" fill="none" marker-end="url(#arrow)">
+      <line x1="600" y1="254" x2="600" y2="294" />
+    </g>
+    <rect x="440" y="260" width="320" height="26" rx="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" />
+    <text x="600" y="278" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="600" fill="#334155" text-anchor="middle">HTTP POST /v1/chat/completions</text>
+
+    <!-- 2단계: 추론 엔진 및 런타임 계층 -->
+    <g filter="url(#card-shadow)">
+      <rect x="64" y="302" width="1072" height="124" rx="16" fill="#ffffff" stroke="#a7f3d0" stroke-width="2" />
+    </g>
+    <rect x="88" y="324" width="140" height="34" rx="8" fill="#d1fae5" />
+    <text x="158" y="347" font-size="18" font-weight="700" fill="#047857" text-anchor="middle">추론 런타임 계층</text>
+    <text x="88" y="386" font-size="24" font-weight="700" fill="#064e3b">로컬 서빙 엔진 및 가중치 처리</text>
+    <text x="88" y="412" font-size="20" font-weight="500" fill="#065f46">Ollama, llama.cpp, vLLM · 양자화 가중치(GGUF, AWQ, FP16) · KV 캐시 연산</text>
+
+    <!-- 2단계 -> 3단계 연결선과 프로토콜 라벨 -->
+    <g stroke="#475569" stroke-width="2.5" stroke-linecap="butt" fill="none" marker-end="url(#arrow)">
+      <line x1="600" y1="428" x2="600" y2="466" />
+    </g>
+    <rect x="460" y="434" width="280" height="26" rx="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" />
+    <text x="600" y="452" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="15" font-weight="600" fill="#334155" text-anchor="middle">메모리 매핑(mmap) 및 텐서 연산</text>
+
+    <!-- 3단계: 하드웨어 메모리 계층 -->
+    <g filter="url(#card-shadow)">
+      <rect x="64" y="474" width="1072" height="114" rx="16" fill="#ffffff" stroke="#fed7aa" stroke-width="2" />
+    </g>
+    <rect x="88" y="494" width="140" height="34" rx="8" fill="#ffedd5" />
+    <text x="158" y="517" font-size="18" font-weight="700" fill="#c2410c" text-anchor="middle">하드웨어 계층</text>
+    <text x="88" y="556" font-size="24" font-weight="700" fill="#7c2d12">메모리 대역폭과 연산 가속기</text>
+    <text x="440" y="556" font-size="20" font-weight="500" fill="#9a3412">NVIDIA GPU VRAM (CUDA) · Apple 통합 메모리 (Metal) · 시스템 RAM/CPU</text>
+  </g>
+</svg>

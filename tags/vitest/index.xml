@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Vitest on 휘발성 메모리 백업소</title><link>https://dev.route50.kr/tags/vitest/</link><description>Recent content in Vitest on 휘발성 메모리 백업소</description><image><title>휘발성 메모리 백업소</title><url>https://dev.route50.kr/about/cover.jpg</url><link>https://dev.route50.kr/about/cover.jpg</link></image><generator>Hugo</generator><language>ko-kr</language><lastBuildDate>Wed, 04 Nov 2026 03:12:38 +0900</lastBuildDate><atom:link href="https://dev.route50.kr/tags/vitest/index.xml" rel="self" type="application/rss+xml"/><item><title>2. Next.js, Prisma, PostgreSQL 테스트 작성 방법</title><link>https://dev.route50.kr/posts/nextjs-testing-tools-2/</link><pubDate>Wed, 04 Nov 2026 00:00:00 +0900</pubDate><guid>https://dev.route50.kr/posts/nextjs-testing-tools-2/</guid><description>Vitest로 컴포넌트를 테스트하고, Prisma Client를 mock으로 대체하는 단위 테스트와 Docker PostgreSQL을 쓰는 통합 테스트, Playwright E2E 실행 방법을 정리했습니다.</description><content:encoded><![CDATA[<p>Next.js 앱의 테스트는 층에 따라 방법이 다릅니다. 컴포넌트는 Vitest와 React Testing Library로 렌더링해서 확인하고, Prisma 코드는 <a href="#term-mock">mock</a>(가짜 객체)으로 대체해 DB 없이 확인하거나 Docker의 PostgreSQL에 <code>prisma migrate deploy</code>로 테이블을 만든 뒤 실제로 확인하며, 화면 흐름은 Playwright로 확인합니다. 도구를 고르는 기준은 <a href="https://dev.route50.kr/posts/nextjs-testing-tools-1/">1. Next.js 테스트 종류와 도구</a>에 정리해 두었습니다.</p>
+<p>이 글의 코드는 Next.js, Prisma, Playwright 공식 문서(2026-11-04 확인)의 예시를 바탕으로 합니다. 작성 환경에서는 코드를 직접 실행하지 못해 실행 결과는 싣지 않았습니다. 그대로 복사하기 전에 프로젝트의 버전에 맞는지 확인해야 합니다.</p>
+<h2 id="컴포넌트-테스트-vitest와-react-testing-library">컴포넌트 테스트: Vitest와 React Testing Library</h2>
+<p>Vitest로 컴포넌트를 테스트하려면 Vitest, React 플러그인, <a href="#term-jsdom">jsdom</a>, React Testing Library를 개발 의존성으로 설치합니다. Next.js 문서가 안내하는 TypeScript 프로젝트 기준 명령은 다음과 같습니다. (<a href="https://nextjs.org/docs/app/guides/testing/vitest">How to set up Vitest with Next.js</a>, Next.js Documentation)</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>npm install -D vitest @vitejs/plugin-react jsdom @testing-library/react @testing-library/dom vite-tsconfig-paths
+</span></span></code></pre></div><p>프로젝트 루트에 <code>vitest.config.mts</code>를 만들고 테스트 환경을 <code>jsdom</code>으로 지정합니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-ts" data-lang="ts"><span style="display:flex;"><span><span style="color:#ff7b72">import</span> { defineConfig } <span style="color:#ff7b72">from</span> <span style="color:#a5d6ff">&#39;vitest/config&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> react <span style="color:#ff7b72">from</span> <span style="color:#a5d6ff">&#39;@vitejs/plugin-react&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> tsconfigPaths <span style="color:#ff7b72">from</span> <span style="color:#a5d6ff">&#39;vite-tsconfig-paths&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">export</span> <span style="color:#ff7b72">default</span> defineConfig({
+</span></span><span style="display:flex;"><span>  plugins<span style="color:#ff7b72;font-weight:bold">:</span> [tsconfigPaths(), react()],
+</span></span><span style="display:flex;"><span>  test<span style="color:#ff7b72;font-weight:bold">:</span> {
+</span></span><span style="display:flex;"><span>    environment<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#39;jsdom&#39;</span>,
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><p><code>package.json</code>의 <code>scripts</code>에 <code>&quot;test&quot;: &quot;vitest&quot;</code>를 추가한 뒤 <code>npm run test</code>로 실행합니다. 이 명령은 기본적으로 파일 변경을 감시하며 계속 실행됩니다. 테스트 파일은 문서의 예시처럼 <code>__tests__/page.test.tsx</code>에 두거나 <code>app</code> 폴더 안에 함께 둘 수 있습니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-tsx" data-lang="tsx"><span style="display:flex;"><span><span style="color:#ff7b72">import</span> { expect, test } <span style="color:#ff7b72">from</span> <span style="color:#a5d6ff">&#39;vitest&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> { render, screen } <span style="color:#ff7b72">from</span> <span style="color:#a5d6ff">&#39;@testing-library/react&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">import</span> Page <span style="color:#ff7b72">from</span> <span style="color:#a5d6ff">&#39;../app/page&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>test(<span style="color:#a5d6ff">&#39;Page&#39;</span>, () <span style="color:#ff7b72;font-weight:bold">=&gt;</span> {
+</span></span><span style="display:flex;"><span>  render(&lt;<span style="color:#7ee787">Page</span> /&gt;)
+</span></span><span style="display:flex;"><span>  expect(screen.getByRole(<span style="color:#a5d6ff">&#39;heading&#39;</span>, { level: <span style="color:#ff7b72">1</span>, name<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#39;Home&#39;</span> })).toBeDefined()
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><p>이 테스트는 <code>Page</code> 컴포넌트를 렌더링한 뒤 이름이 <code>Home</code>인 1단계 제목이 화면에 있는지 확인합니다. 이름이 겹치는 요소가 여러 개면 <code>getByRole</code>이 오류를 내므로, 헷갈리면 역할과 이름을 함께 지정해야 합니다.</p>
+<p><code>async</code> Server Component는 이 방법으로 테스트하지 못합니다. Next.js 문서는 Vitest가 <code>async</code> Server Component를 지원하지 않으므로 E2E로 확인하라고 안내합니다. 데이터를 가져오는 Server Component가 많은 앱이라면 컴포넌트 테스트보다 E2E 비중이 커집니다.</p>
+<h2 id="단위-테스트-prisma-client를-mock으로-대체">단위 테스트: Prisma Client를 mock으로 대체</h2>
+<p>Prisma Client를 mock으로 바꾸면 DB 없이 비즈니스 로직만 빠르게 확인할 수 있습니다. <a href="https://www.prisma.io/docs">Prisma</a>(<a href="#term-orm">ORM</a>, Object-Relational Mapping: 객체와 관계형 DB를 연결하는 도구) 공식 가이드는 Jest와 <code>jest-mock-extended</code> 조합을 씁니다. 방식은 두 가지입니다. (<a href="https://www.prisma.io/docs/orm/v7/prisma-client/testing/unit-testing">Unit testing</a>, Prisma Documentation)</p>
+<ul>
+<li>싱글톤 방식: <code>client.ts</code>에서 만든 Prisma Client 모듈을 <code>jest.mock</code>으로 통째로 깊은 mock(<code>mockDeep&lt;PrismaClient&gt;()</code>)으로 바꾸고, 테스트마다 초기화합니다. 이 파일을 <code>jest.config.js</code>의 <code>setupFilesAfterEnv</code>에 등록합니다.</li>
+<li>의존성 주입 방식: 함수가 Prisma Client를 인자로 받게 만들고, 테스트에서는 <code>createMockContext</code>로 만든 mock을 넘깁니다.</li>
+</ul>
+<p>테스트에서는 <code>user.create</code> 같은 모델 메서드가 돌려줄 값을 먼저 정하고, 테스트할 함수를 호출해 결과를 비교합니다. mock은 쿼리 자체가 맞는지는 알려 주지 않습니다. 잘못된 <code>where</code> 조건이나 유니크 제약 위반은 mock으로는 통과하므로, 쿼리가 중요한 코드는 아래 통합 테스트로 한 번 더 확인합니다.</p>
+<h2 id="통합-테스트-docker의-postgresql에-실제로-연결">통합 테스트: Docker의 PostgreSQL에 실제로 연결</h2>
+<p>통합 테스트는 테스트용 PostgreSQL을 띄워 놓고 Prisma로 진짜 쿼리를 실행합니다. Prisma 공식 가이드는 <code>docker compose</code>로 컨테이너를 만들고, 마이그레이션을 적용하고, 테스트가 끝나면 컨테이너를 지우는 순서를 안내합니다. (<a href="https://www.prisma.io/docs/orm/v7/prisma-client/testing/integration-testing">Integration testing</a>, Prisma Documentation)</p>
+<ol>
+<li><code>docker-compose.yml</code>에 <code>postgres</code> 서비스를 정의하고 호스트 포트 5433을 컨테이너 5432에 연결합니다. 사용자, 비밀번호, DB 이름은 테스트 전용 값으로 정합니다.</li>
+<li><code>.env.test</code>에 <code>DATABASE_URL=&quot;postgresql://prisma:prisma@localhost:5433/tests&quot;</code> 같은 접속 주소를 둡니다.</li>
+<li><code>docker compose up -d</code>로 컨테이너를 시작합니다.</li>
+<li><code>prisma migrate deploy</code>로 <code>prisma/migrations/</code>의 마이그레이션을 적용해 테이블을 만듭니다.</li>
+<li>테스트는 <code>beforeAll</code>에서 필요한 데이터를 넣고, <code>jest -i</code>처럼 한 번에 하나씩 순서대로 실행합니다. 테스트가 같은 DB를 함께 쓰기 때문입니다.</li>
+<li><code>afterAll</code>에서 <code>deleteMany()</code>로 데이터를 지우고 <code>$disconnect()</code>를 호출합니다. 외래 키가 있으면 자식 테이블부터 지워야 합니다.</li>
+<li>끝나면 <code>docker compose down</code>으로 컨테이너를 지웁니다.</li>
+</ol>
+<p>운영 DB의 접속 주소를 <code>.env.test</code>에 넣지 않도록 주의해야 합니다. 테스트가 <code>deleteMany()</code>로 데이터를 지우기 때문에, 주소가 잘못 지정되면 운영 데이터가 삭제됩니다. <code>localhost</code>와 테스트 전용 포트인지 확인하는 습관이 필요합니다.</p>
+<p>컨테이너를 직접 관리하기 번거로우면 Testcontainers를 쓸 수 있습니다. <code>npm install @testcontainers/postgresql --save-dev</code>로 설치하고, 컨테이너를 시작한 뒤 <code>getConnectionUri()</code>로 접속 주소를 얻어 쓰는 방식입니다. (<a href="https://node.testcontainers.org/modules/postgresql/">PostgreSQL Module</a>, Testcontainers for Node.js) 이 경우에도 Docker가 실행 중이어야 하고, 얻은 주소를 Prisma의 <code>DATABASE_URL</code>로 넘기는 부분은 직접 작성해야 합니다.</p>
+<h2 id="e2e-테스트-playwright">E2E 테스트: Playwright</h2>
+<p>Playwright는 <code>npm init playwright@latest</code>로 설치하고 <code>npx playwright test</code>로 실행합니다. 기본으로 헤드리스(화면 없음)로 병렬 실행하고, <code>--headed</code>를 붙이면 브라우저 창이 보이며, <code>--project=chromium</code>으로 브라우저를 하나만 고르고, <code>--ui</code>로 UI 모드를 엽니다. (<a href="https://playwright.dev/docs/intro">Installation</a>, Playwright) Node.js는 최신 22.x, 24.x, 26.x가 필요합니다.</p>
+<p>E2E 테스트는 앱이 실제로 떠 있어야 하므로 보통 <code>next build</code>와 <code>next start</code>로 띄운 서버를 대상으로 합니다. 이때 앞의 통합 테스트와 같은 테스트용 DB를 연결하면 회원 가입, 로그인 같은 시나리오를 운영 데이터와 분리해서 확인할 수 있습니다. 시나리오를 한 번에 길게 묶으면 실패했을 때 원인을 찾기 어려우므로, 핵심 흐름 몇 개만 E2E로 두고 나머지는 앞의 단위, 통합 테스트로 확인합니다.</p>
+<h2 id="테스트를-나누는-기준">테스트를 나누는 기준</h2>
+<p>층마다 비용이 다르므로 아래처럼 배분합니다. 이 비율은 공식 문서가 정한 수치가 아니라 작성자의 정리입니다.</p>
+<table>
+	<thead>
+			<tr>
+					<th>층</th>
+					<th>속도</th>
+					<th>개수</th>
+					<th>주로 확인하는 것</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>단위, 컴포넌트</td>
+					<td>빠름</td>
+					<td>많게</td>
+					<td>계산, 검증, 화면 표시</td>
+			</tr>
+			<tr>
+					<td>통합</td>
+					<td>보통</td>
+					<td>중간</td>
+					<td>Prisma 쿼리, API 저장과 조회</td>
+			</tr>
+			<tr>
+					<td>E2E</td>
+					<td>느림</td>
+					<td>적게</td>
+					<td>핵심 사용자 흐름</td>
+			</tr>
+	</tbody>
+</table>
+<h2 id="참고-자료">참고 자료</h2>
+<ul>
+<li><a href="https://nextjs.org/docs/app/guides/testing/vitest">How to set up Vitest with Next.js</a>, Next.js Documentation, 2026-11-04 확인</li>
+<li><a href="https://www.prisma.io/docs/orm/v7/prisma-client/testing/unit-testing">Unit testing</a>, Prisma Documentation, 2026-11-04 확인</li>
+<li><a href="https://www.prisma.io/docs/orm/v7/prisma-client/testing/integration-testing">Integration testing</a>, Prisma Documentation, 2026-11-04 확인</li>
+<li><a href="https://node.testcontainers.org/modules/postgresql/">PostgreSQL Module</a>, Testcontainers for Node.js, 2026-11-04 확인</li>
+<li><a href="https://playwright.dev/docs/intro">Installation</a>, Playwright, 2026-11-04 확인</li>
+</ul>
+<h2 id="용어-설명">용어 설명</h2>
+<h3 id="term-jsdom">jsdom</h3>
+<p>Node.js 안에서 브라우저의 DOM을 흉내 내는 JavaScript 라이브러리입니다. 브라우저 없이 컴포넌트를 렌더링해 볼 수 있습니다. (<a href="https://github.com/jsdom/jsdom">jsdom</a>, GitHub)</p>
+<h3 id="term-mock">mock</h3>
+<p>테스트에서 실제 객체 대신 쓰는 가짜 객체입니다. 반환값을 미리 정해 두고, 호출됐는지 확인할 수 있습니다. (<a href="https://vitest.dev/guide/mocking">Vitest Mocking</a>, Vitest)</p>
+<h3 id="term-orm">ORM</h3>
+<p>Object-Relational Mapping. 코드의 객체와 관계형 데이터베이스의 테이블을 연결해 주는 도구입니다. (<a href="https://www.prisma.io/docs/orm">Prisma ORM</a>, Prisma Documentation)</p>
+]]></content:encoded></item><item><title>1. Next.js 테스트 종류와 도구: Vitest, Jest, Playwright 비교</title><link>https://dev.route50.kr/posts/nextjs-testing-tools-1/</link><pubDate>Wed, 04 Nov 2026 00:00:00 +0900</pubDate><guid>https://dev.route50.kr/posts/nextjs-testing-tools-1/</guid><description>Next.js, React, Prisma, PostgreSQL 조합에서 단위, 컴포넌트, 통합, E2E 테스트가 확인하는 것과 Vitest, Jest, Playwright, Cypress의 차이를 정리했습니다.</description><content:encoded><![CDATA[<p>Next.js, React, Prisma, PostgreSQL로 만든 앱은 층마다 다른 도구로 테스트합니다. 함수와 컴포넌트는 <a href="https://vitest.dev/">Vitest</a>나 <a href="https://jestjs.io/">Jest</a>에 React Testing Library를 더해 확인하고, Prisma 쿼리는 실제 PostgreSQL을 띄워 확인하며, 화면 전체 흐름은 <a href="https://playwright.dev/">Playwright</a>(<a href="#term-e2e">E2E</a>, End-to-End: 처음부터 끝까지 전체 흐름 테스트)로 확인하는 구성이 가장 무난합니다. <code>async</code> Server Component는 단위 테스트 도구가 아직 제대로 다루지 못해서 E2E로 확인하라는 것이 Next.js 공식 문서의 안내입니다.</p>
+<p>이 글은 2026-11-04 기준으로 Next.js, Vitest, Jest, Playwright, Cypress, Prisma 공식 문서를 읽고 정리했습니다. 작성 환경에서는 예시 코드를 실행하지 못해 이 글에는 실행 결과를 싣지 않았고, 코드는 모두 공식 문서의 예시를 바탕으로 합니다. 도구를 설치하고 실제로 테스트를 작성하는 방법은 <a href="https://dev.route50.kr/posts/nextjs-testing-tools-2/">2. Next.js, Prisma, PostgreSQL 테스트 작성 방법</a>에서 다룹니다.</p>
+<h2 id="테스트-종류와-확인하는-것">테스트 종류와 확인하는 것</h2>
+<p>테스트는 한 번에 확인하는 범위에 따라 단위, 컴포넌트, 통합, E2E로 나뉩니다. Next.js 문서도 이 분류를 쓰고, 여기에 렌더링 결과를 저장해 두었다가 비교하는 스냅샷 테스트를 더해 설명합니다. (<a href="https://nextjs.org/docs/app/guides/testing">Testing</a>, Next.js Documentation)</p>
+<table>
+	<thead>
+			<tr>
+					<th>종류</th>
+					<th>확인하는 범위</th>
+					<th>이 스택에서의 예</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>단위 테스트</td>
+					<td>함수, 훅 하나를 따로</td>
+					<td>가격 계산 함수, 입력값 검증 함수</td>
+			</tr>
+			<tr>
+					<td>컴포넌트 테스트</td>
+					<td>React 컴포넌트의 렌더링과 이벤트 반응</td>
+					<td>로그인 폼에 이메일을 넣으면 버튼이 켜지는지</td>
+			</tr>
+			<tr>
+					<td>통합 테스트</td>
+					<td>여러 조각이 함께 동작하는지</td>
+					<td>Route Handler가 Prisma를 거쳐 PostgreSQL에 저장하는지</td>
+			</tr>
+			<tr>
+					<td>E2E 테스트</td>
+					<td>브라우저에서 사용자 시나리오 전체</td>
+					<td>회원 가입부터 로그인까지</td>
+			</tr>
+			<tr>
+					<td>스냅샷 테스트</td>
+					<td>렌더링 결과가 이전과 같은지</td>
+					<td>컴포넌트 출력 비교</td>
+			</tr>
+	</tbody>
+</table>
+<p>이슈에서 말한 기능별 테스트와 화면 테스트는 이 표에서 기준이 달라 보이는 것뿐입니다. 기능별 테스트는 보통 통합 테스트나 E2E로, 화면 테스트는 컴포넌트 테스트나 E2E로 작성합니다. 사용자 테스트는 실제 사람이 써 보고 불편한 곳을 찾는 방식이라 도구로 자동화하지 않습니다. 자동화한 테스트가 통과해도 사용하기 편한지는 알 수 없기 때문에, 출시 전에 사람이 직접 확인하는 단계는 따로 둡니다.</p>
+<h2 id="단위-테스트-도구-vitest와-jest">단위 테스트 도구: Vitest와 Jest</h2>
+<p>Vitest와 Jest는 테스트를 실행하고 결과를 판정하는 테스트 러너입니다. Vitest는 Vite를 기반으로 하는 테스트 프레임워크이고 Vite 6.4.0 이상, Node.js 22.12.0 이상이 필요합니다. (<a href="https://vitest.dev/guide/">Getting Started</a>, Vitest) Jest는 오랫동안 쓰인 JavaScript 테스트 프레임워크로 <code>npm install --save-dev jest</code>로 설치합니다. (<a href="https://jestjs.io/docs/getting-started">Getting Started</a>, Jest)</p>
+<p>두 도구 모두 Next.js 공식 가이드가 있습니다. Next.js 문서는 Jest를 단위 테스트와 스냅샷 테스트, Vitest를 단위 테스트용으로 소개합니다. 설정 방식이 다를 뿐 하는 일은 비슷하므로, 새로 시작한다면 Vitest를 쓰고 이미 Jest로 쌓아 둔 테스트가 있으면 그대로 두는 것이 부담이 적습니다. 이 판단은 공식 문서의 설명이 아니라 설정 비용을 기준으로 한 작성자의 정리입니다. 한 가지 주의할 점이 있습니다. Prisma 공식 테스트 가이드의 예시는 Jest 기준이어서, Vitest를 쓰면 같은 구조를 Vitest 문법으로 바꿔야 합니다.</p>
+<p>컴포넌트를 테스트할 때는 러너에 <a href="https://testing-library.com/docs/react-testing-library/intro/">React Testing Library</a>를 더합니다. 이 라이브러리는 사용자가 소프트웨어를 쓰는 방식에 가깝게 테스트할수록 신뢰가 높아진다는 원칙으로 만들어졌습니다. (<a href="https://testing-library.com/docs/guiding-principles/">Guiding Principles</a>, Testing Library) 그래서 컴포넌트 내부 상태가 아니라 화면에 보이는 제목, 버튼 이름 같은 결과로 확인합니다.</p>
+<h2 id="e2e-테스트-도구-playwright와-cypress">E2E 테스트 도구: Playwright와 Cypress</h2>
+<p>Playwright와 Cypress는 실제 브라우저를 띄워 사용자처럼 화면을 조작하는 도구입니다. Playwright는 Chromium, WebKit, Firefox를 Windows, Linux, macOS에서 지원하고, Node.js는 최신 22.x, 24.x, 26.x가 필요합니다. (<a href="https://playwright.dev/docs/intro">Installation</a>, Playwright) Cypress는 E2E와 컴포넌트 테스트를 모두 지원하고, Firefox와 Chrome 계열 브라우저(Edge 포함)에서 실행합니다. (<a href="https://docs.cypress.io/app/get-started/why-cypress">Why Cypress?</a>, Cypress Documentation)</p>
+<p>Next.js 문서에서 두 도구의 역할은 조금 다르게 소개됩니다. Playwright는 E2E 테스트용, Cypress는 E2E와 컴포넌트 테스트용입니다. Safari 엔진(WebKit)까지 확인해야 하면 Playwright, 컴포넌트를 실제 브라우저에서 확인하려면 Cypress가 선택지가 됩니다.</p>
+<h2 id="보조-도구-msw와-testcontainers">보조 도구: MSW와 Testcontainers</h2>
+<p>외부 API 응답은 <a href="https://mswjs.io/docs/">MSW</a>(Mock Service Worker)로, 데이터베이스는 Testcontainers로 대신합니다. MSW는 브라우저와 Node.js에서 네트워크 요청을 가로채 원하는 응답을 돌려주는 라이브러리입니다. (<a href="https://mswjs.io/docs/">Introduction</a>, MSW) <a href="https://node.testcontainers.org/modules/postgresql/">Testcontainers for Node.js</a>는 테스트 코드 안에서 PostgreSQL 컨테이너를 만들고 접속 주소를 얻는 라이브러리입니다. 컨테이너를 직접 관리하는 대신 <code>docker compose</code>로 테스트용 DB를 띄우는 방법도 있고, Prisma 공식 가이드가 이 방법을 씁니다.</p>
+<h2 id="많이-쓰는-도구">많이 쓰는 도구</h2>
+<p>npm 주간 다운로드 수로 보면 Vitest, Playwright, Testing Library가 많이 쓰입니다. 아래는 npm 레지스트리 API로 확인한 2026-10-27부터 2026-11-02까지의 값입니다. (<a href="https://github.com/npm/registry/blob/main/docs/download-counts.md">npm downloads API</a>, npm)</p>
+<table>
+	<thead>
+			<tr>
+					<th>패키지</th>
+					<th>주간 다운로드</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td><code>vitest</code></td>
+					<td>약 1억 7,107만</td>
+			</tr>
+			<tr>
+					<td><code>@playwright/test</code></td>
+					<td>약 1억 561만</td>
+			</tr>
+			<tr>
+					<td><code>@testing-library/react</code></td>
+					<td>약 8,977만</td>
+			</tr>
+			<tr>
+					<td><code>jest</code></td>
+					<td>약 6,136만</td>
+			</tr>
+			<tr>
+					<td><code>msw</code></td>
+					<td>약 3,214만</td>
+			</tr>
+			<tr>
+					<td><code>testcontainers</code></td>
+					<td>약 1,178만</td>
+			</tr>
+			<tr>
+					<td><code>cypress</code></td>
+					<td>약 799만</td>
+			</tr>
+	</tbody>
+</table>
+<p>다운로드 수에는 <a href="#term-ci">CI</a>(Continuous Integration: 지속적 통합)가 반복해서 설치한 횟수가 섞여 있어 실제 사용자 수와는 다릅니다. 어떤 도구가 널리 쓰이는지 가늠하는 용도로만 보는 것이 좋습니다.</p>
+<h2 id="참고-자료">참고 자료</h2>
+<ul>
+<li><a href="https://nextjs.org/docs/app/guides/testing">Testing</a>, Next.js Documentation, 2026-11-04 확인</li>
+<li><a href="https://nextjs.org/docs/app/guides/testing/vitest">How to set up Vitest with Next.js</a>, Next.js Documentation, 2026-11-04 확인</li>
+<li><a href="https://vitest.dev/guide/">Getting Started</a>, Vitest, 2026-11-04 확인</li>
+<li><a href="https://jestjs.io/docs/getting-started">Getting Started</a>, Jest, 2026-11-04 확인</li>
+<li><a href="https://testing-library.com/docs/guiding-principles/">Guiding Principles</a>, Testing Library, 2026-11-04 확인</li>
+<li><a href="https://playwright.dev/docs/intro">Installation</a>, Playwright, 2026-11-04 확인</li>
+<li><a href="https://docs.cypress.io/app/get-started/why-cypress">Why Cypress?</a>, Cypress Documentation, 2026-11-04 확인</li>
+<li><a href="https://mswjs.io/docs/">Introduction</a>, MSW, 2026-11-04 확인</li>
+<li><a href="https://node.testcontainers.org/modules/postgresql/">PostgreSQL Module</a>, Testcontainers for Node.js, 2026-11-04 확인</li>
+<li><a href="https://github.com/npm/registry/blob/main/docs/download-counts.md">Download counts</a>, npm registry, 2026-11-04 확인</li>
+</ul>
+<h2 id="용어-설명">용어 설명</h2>
+<h3 id="term-ci">CI</h3>
+<p>Continuous Integration(지속적 통합). 코드를 저장소에 올릴 때마다 서버가 자동으로 빌드와 테스트를 실행하는 방식입니다. (<a href="https://docs.github.com/en/actions/get-started/continuous-integration">GitHub Actions 문서</a>, GitHub Docs)</p>
+<h3 id="term-e2e">E2E</h3>
+<p>End-to-End(처음부터 끝까지). 실제 브라우저에서 사용자가 하는 행동을 그대로 따라 하며 앱 전체를 확인하는 테스트입니다. (<a href="https://nextjs.org/docs/app/guides/testing">Testing</a>, Next.js Documentation)</p>
+]]></content:encoded></item></channel></rss>

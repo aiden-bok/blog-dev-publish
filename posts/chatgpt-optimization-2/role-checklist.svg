@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" role="img" aria-labelledby="t d">
+  <title id="t">직군별로 넣을 자료와 검증 방법</title>
+  <desc id="d">기획, 디자인, 개발, 운영 네 직군이 ChatGPT에 넣을 자료와 결과를 검증하는 방법을 한 줄씩 정리한 표</desc>
+  <rect width="1200" height="640" rx="24" fill="#f8fafc" />
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <text x="64" y="96" font-size="36" font-weight="800" fill="#0f172a">직군마다 넣을 자료와 검증 수단이 다르다</text>
+    <rect x="64" y="136" width="1072" height="56" rx="12" fill="#0f172a" />
+    <text x="96" y="172" font-size="24" font-weight="700" fill="#f8fafc">직군</text>
+    <text x="304" y="172" font-size="24" font-weight="700" fill="#f8fafc">넣을 자료</text>
+    <text x="704" y="172" font-size="24" font-weight="700" fill="#f8fafc">검증 수단</text>
+
+    <rect x="64" y="208" width="1072" height="88" rx="12" fill="#e0f2fe" />
+    <text x="96" y="262" font-size="26" font-weight="800" fill="#0c4a6e">기획자</text>
+    <text x="304" y="262" font-size="24" fill="#0f172a">인터뷰 메모, 결정할 안건</text>
+    <text x="704" y="262" font-size="24" fill="#0f172a">원문 인용 대조</text>
+
+    <rect x="64" y="312" width="1072" height="88" rx="12" fill="#fce7f3" />
+    <text x="96" y="366" font-size="26" font-weight="800" fill="#831843">디자이너</text>
+    <text x="304" y="366" font-size="24" fill="#0f172a">대상 사용자, 화면 상황</text>
+    <text x="704" y="366" font-size="24" fill="#0f172a">사용자 테스트</text>
+
+    <rect x="64" y="416" width="1072" height="88" rx="12" fill="#dcfce7" />
+    <text x="96" y="470" font-size="26" font-weight="800" fill="#14532d">개발자</text>
+    <text x="304" y="470" font-size="24" fill="#0f172a">버전, 오류 로그, 시도한 방법</text>
+    <text x="704" y="470" font-size="24" fill="#0f172a">직접 실행해 확인</text>
+
+    <rect x="64" y="520" width="1072" height="88" rx="12" fill="#fef3c7" />
+    <text x="96" y="574" font-size="26" font-weight="800" fill="#78350f">운영자</text>
+    <text x="304" y="574" font-size="24" fill="#0f172a">집계 표, 지난 보고서 형식</text>
+    <text x="704" y="574" font-size="24" fill="#0f172a">수치를 원본과 대조</text>
+  </g>
+</svg>

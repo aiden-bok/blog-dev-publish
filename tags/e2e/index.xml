@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>E2E on 휘발성 메모리 백업소</title><link>https://dev.route50.kr/tags/e2e/</link><description>Recent content in E2E on 휘발성 메모리 백업소</description><image><title>휘발성 메모리 백업소</title><url>https://dev.route50.kr/about/cover.jpg</url><link>https://dev.route50.kr/about/cover.jpg</link></image><generator>Hugo</generator><language>ko-kr</language><lastBuildDate>Wed, 04 Nov 2026 03:12:37 +0900</lastBuildDate><atom:link href="https://dev.route50.kr/tags/e2e/index.xml" rel="self" type="application/rss+xml"/><item><title>1. Next.js 테스트 종류와 도구: Vitest, Jest, Playwright 비교</title><link>https://dev.route50.kr/posts/nextjs-testing-tools-1/</link><pubDate>Wed, 04 Nov 2026 00:00:00 +0900</pubDate><guid>https://dev.route50.kr/posts/nextjs-testing-tools-1/</guid><description>Next.js, React, Prisma, PostgreSQL 조합에서 단위, 컴포넌트, 통합, E2E 테스트가 확인하는 것과 Vitest, Jest, Playwright, Cypress의 차이를 정리했습니다.</description><content:encoded><![CDATA[<p>Next.js, React, Prisma, PostgreSQL로 만든 앱은 층마다 다른 도구로 테스트합니다. 함수와 컴포넌트는 <a href="https://vitest.dev/">Vitest</a>나 <a href="https://jestjs.io/">Jest</a>에 React Testing Library를 더해 확인하고, Prisma 쿼리는 실제 PostgreSQL을 띄워 확인하며, 화면 전체 흐름은 <a href="https://playwright.dev/">Playwright</a>(<a href="#term-e2e">E2E</a>, End-to-End: 처음부터 끝까지 전체 흐름 테스트)로 확인하는 구성이 가장 무난합니다. <code>async</code> Server Component는 단위 테스트 도구가 아직 제대로 다루지 못해서 E2E로 확인하라는 것이 Next.js 공식 문서의 안내입니다.</p>
+<p>이 글은 2026-11-04 기준으로 Next.js, Vitest, Jest, Playwright, Cypress, Prisma 공식 문서를 읽고 정리했습니다. 작성 환경에서는 예시 코드를 실행하지 못해 이 글에는 실행 결과를 싣지 않았고, 코드는 모두 공식 문서의 예시를 바탕으로 합니다. 도구를 설치하고 실제로 테스트를 작성하는 방법은 <a href="https://dev.route50.kr/posts/nextjs-testing-tools-2/">2. Next.js, Prisma, PostgreSQL 테스트 작성 방법</a>에서 다룹니다.</p>
+<h2 id="테스트-종류와-확인하는-것">테스트 종류와 확인하는 것</h2>
+<p>테스트는 한 번에 확인하는 범위에 따라 단위, 컴포넌트, 통합, E2E로 나뉩니다. Next.js 문서도 이 분류를 쓰고, 여기에 렌더링 결과를 저장해 두었다가 비교하는 스냅샷 테스트를 더해 설명합니다. (<a href="https://nextjs.org/docs/app/guides/testing">Testing</a>, Next.js Documentation)</p>
+<table>
+	<thead>
+			<tr>
+					<th>종류</th>
+					<th>확인하는 범위</th>
+					<th>이 스택에서의 예</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>단위 테스트</td>
+					<td>함수, 훅 하나를 따로</td>
+					<td>가격 계산 함수, 입력값 검증 함수</td>
+			</tr>
+			<tr>
+					<td>컴포넌트 테스트</td>
+					<td>React 컴포넌트의 렌더링과 이벤트 반응</td>
+					<td>로그인 폼에 이메일을 넣으면 버튼이 켜지는지</td>
+			</tr>
+			<tr>
+					<td>통합 테스트</td>
+					<td>여러 조각이 함께 동작하는지</td>
+					<td>Route Handler가 Prisma를 거쳐 PostgreSQL에 저장하는지</td>
+			</tr>
+			<tr>
+					<td>E2E 테스트</td>
+					<td>브라우저에서 사용자 시나리오 전체</td>
+					<td>회원 가입부터 로그인까지</td>
+			</tr>
+			<tr>
+					<td>스냅샷 테스트</td>
+					<td>렌더링 결과가 이전과 같은지</td>
+					<td>컴포넌트 출력 비교</td>
+			</tr>
+	</tbody>
+</table>
+<p>이슈에서 말한 기능별 테스트와 화면 테스트는 이 표에서 기준이 달라 보이는 것뿐입니다. 기능별 테스트는 보통 통합 테스트나 E2E로, 화면 테스트는 컴포넌트 테스트나 E2E로 작성합니다. 사용자 테스트는 실제 사람이 써 보고 불편한 곳을 찾는 방식이라 도구로 자동화하지 않습니다. 자동화한 테스트가 통과해도 사용하기 편한지는 알 수 없기 때문에, 출시 전에 사람이 직접 확인하는 단계는 따로 둡니다.</p>
+<h2 id="단위-테스트-도구-vitest와-jest">단위 테스트 도구: Vitest와 Jest</h2>
+<p>Vitest와 Jest는 테스트를 실행하고 결과를 판정하는 테스트 러너입니다. Vitest는 Vite를 기반으로 하는 테스트 프레임워크이고 Vite 6.4.0 이상, Node.js 22.12.0 이상이 필요합니다. (<a href="https://vitest.dev/guide/">Getting Started</a>, Vitest) Jest는 오랫동안 쓰인 JavaScript 테스트 프레임워크로 <code>npm install --save-dev jest</code>로 설치합니다. (<a href="https://jestjs.io/docs/getting-started">Getting Started</a>, Jest)</p>
+<p>두 도구 모두 Next.js 공식 가이드가 있습니다. Next.js 문서는 Jest를 단위 테스트와 스냅샷 테스트, Vitest를 단위 테스트용으로 소개합니다. 설정 방식이 다를 뿐 하는 일은 비슷하므로, 새로 시작한다면 Vitest를 쓰고 이미 Jest로 쌓아 둔 테스트가 있으면 그대로 두는 것이 부담이 적습니다. 이 판단은 공식 문서의 설명이 아니라 설정 비용을 기준으로 한 작성자의 정리입니다. 한 가지 주의할 점이 있습니다. Prisma 공식 테스트 가이드의 예시는 Jest 기준이어서, Vitest를 쓰면 같은 구조를 Vitest 문법으로 바꿔야 합니다.</p>
+<p>컴포넌트를 테스트할 때는 러너에 <a href="https://testing-library.com/docs/react-testing-library/intro/">React Testing Library</a>를 더합니다. 이 라이브러리는 사용자가 소프트웨어를 쓰는 방식에 가깝게 테스트할수록 신뢰가 높아진다는 원칙으로 만들어졌습니다. (<a href="https://testing-library.com/docs/guiding-principles/">Guiding Principles</a>, Testing Library) 그래서 컴포넌트 내부 상태가 아니라 화면에 보이는 제목, 버튼 이름 같은 결과로 확인합니다.</p>
+<h2 id="e2e-테스트-도구-playwright와-cypress">E2E 테스트 도구: Playwright와 Cypress</h2>
+<p>Playwright와 Cypress는 실제 브라우저를 띄워 사용자처럼 화면을 조작하는 도구입니다. Playwright는 Chromium, WebKit, Firefox를 Windows, Linux, macOS에서 지원하고, Node.js는 최신 22.x, 24.x, 26.x가 필요합니다. (<a href="https://playwright.dev/docs/intro">Installation</a>, Playwright) Cypress는 E2E와 컴포넌트 테스트를 모두 지원하고, Firefox와 Chrome 계열 브라우저(Edge 포함)에서 실행합니다. (<a href="https://docs.cypress.io/app/get-started/why-cypress">Why Cypress?</a>, Cypress Documentation)</p>
+<p>Next.js 문서에서 두 도구의 역할은 조금 다르게 소개됩니다. Playwright는 E2E 테스트용, Cypress는 E2E와 컴포넌트 테스트용입니다. Safari 엔진(WebKit)까지 확인해야 하면 Playwright, 컴포넌트를 실제 브라우저에서 확인하려면 Cypress가 선택지가 됩니다.</p>
+<h2 id="보조-도구-msw와-testcontainers">보조 도구: MSW와 Testcontainers</h2>
+<p>외부 API 응답은 <a href="https://mswjs.io/docs/">MSW</a>(Mock Service Worker)로, 데이터베이스는 Testcontainers로 대신합니다. MSW는 브라우저와 Node.js에서 네트워크 요청을 가로채 원하는 응답을 돌려주는 라이브러리입니다. (<a href="https://mswjs.io/docs/">Introduction</a>, MSW) <a href="https://node.testcontainers.org/modules/postgresql/">Testcontainers for Node.js</a>는 테스트 코드 안에서 PostgreSQL 컨테이너를 만들고 접속 주소를 얻는 라이브러리입니다. 컨테이너를 직접 관리하는 대신 <code>docker compose</code>로 테스트용 DB를 띄우는 방법도 있고, Prisma 공식 가이드가 이 방법을 씁니다.</p>
+<h2 id="많이-쓰는-도구">많이 쓰는 도구</h2>
+<p>npm 주간 다운로드 수로 보면 Vitest, Playwright, Testing Library가 많이 쓰입니다. 아래는 npm 레지스트리 API로 확인한 2026-10-27부터 2026-11-02까지의 값입니다. (<a href="https://github.com/npm/registry/blob/main/docs/download-counts.md">npm downloads API</a>, npm)</p>
+<table>
+	<thead>
+			<tr>
+					<th>패키지</th>
+					<th>주간 다운로드</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td><code>vitest</code></td>
+					<td>약 1억 7,107만</td>
+			</tr>
+			<tr>
+					<td><code>@playwright/test</code></td>
+					<td>약 1억 561만</td>
+			</tr>
+			<tr>
+					<td><code>@testing-library/react</code></td>
+					<td>약 8,977만</td>
+			</tr>
+			<tr>
+					<td><code>jest</code></td>
+					<td>약 6,136만</td>
+			</tr>
+			<tr>
+					<td><code>msw</code></td>
+					<td>약 3,214만</td>
+			</tr>
+			<tr>
+					<td><code>testcontainers</code></td>
+					<td>약 1,178만</td>
+			</tr>
+			<tr>
+					<td><code>cypress</code></td>
+					<td>약 799만</td>
+			</tr>
+	</tbody>
+</table>
+<p>다운로드 수에는 <a href="#term-ci">CI</a>(Continuous Integration: 지속적 통합)가 반복해서 설치한 횟수가 섞여 있어 실제 사용자 수와는 다릅니다. 어떤 도구가 널리 쓰이는지 가늠하는 용도로만 보는 것이 좋습니다.</p>
+<h2 id="참고-자료">참고 자료</h2>
+<ul>
+<li><a href="https://nextjs.org/docs/app/guides/testing">Testing</a>, Next.js Documentation, 2026-11-04 확인</li>
+<li><a href="https://nextjs.org/docs/app/guides/testing/vitest">How to set up Vitest with Next.js</a>, Next.js Documentation, 2026-11-04 확인</li>
+<li><a href="https://vitest.dev/guide/">Getting Started</a>, Vitest, 2026-11-04 확인</li>
+<li><a href="https://jestjs.io/docs/getting-started">Getting Started</a>, Jest, 2026-11-04 확인</li>
+<li><a href="https://testing-library.com/docs/guiding-principles/">Guiding Principles</a>, Testing Library, 2026-11-04 확인</li>
+<li><a href="https://playwright.dev/docs/intro">Installation</a>, Playwright, 2026-11-04 확인</li>
+<li><a href="https://docs.cypress.io/app/get-started/why-cypress">Why Cypress?</a>, Cypress Documentation, 2026-11-04 확인</li>
+<li><a href="https://mswjs.io/docs/">Introduction</a>, MSW, 2026-11-04 확인</li>
+<li><a href="https://node.testcontainers.org/modules/postgresql/">PostgreSQL Module</a>, Testcontainers for Node.js, 2026-11-04 확인</li>
+<li><a href="https://github.com/npm/registry/blob/main/docs/download-counts.md">Download counts</a>, npm registry, 2026-11-04 확인</li>
+</ul>
+<h2 id="용어-설명">용어 설명</h2>
+<h3 id="term-ci">CI</h3>
+<p>Continuous Integration(지속적 통합). 코드를 저장소에 올릴 때마다 서버가 자동으로 빌드와 테스트를 실행하는 방식입니다. (<a href="https://docs.github.com/en/actions/get-started/continuous-integration">GitHub Actions 문서</a>, GitHub Docs)</p>
+<h3 id="term-e2e">E2E</h3>
+<p>End-to-End(처음부터 끝까지). 실제 브라우저에서 사용자가 하는 행동을 그대로 따라 하며 앱 전체를 확인하는 테스트입니다. (<a href="https://nextjs.org/docs/app/guides/testing">Testing</a>, Next.js Documentation)</p>
+]]></content:encoded></item></channel></rss>

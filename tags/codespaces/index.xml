@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Codespaces on 휘발성 메모리 백업소</title><link>https://dev.route50.kr/tags/codespaces/</link><description>Recent content in Codespaces on 휘발성 메모리 백업소</description><image><title>휘발성 메모리 백업소</title><url>https://dev.route50.kr/about/cover.jpg</url><link>https://dev.route50.kr/about/cover.jpg</link></image><generator>Hugo</generator><language>ko-kr</language><lastBuildDate>Fri, 06 Nov 2026 17:01:07 +0900</lastBuildDate><atom:link href="https://dev.route50.kr/tags/codespaces/index.xml" rel="self" type="application/rss+xml"/><item><title>2. GitHub Actions, Pages, Releases, Codespaces로 자동화하기</title><link>https://dev.route50.kr/posts/github-guide-2/</link><pubDate>Fri, 06 Nov 2026 00:00:00 +0900</pubDate><guid>https://dev.route50.kr/posts/github-guide-2/</guid><description>GitHub Actions로 검사를 자동화하고, Pages로 사이트를 게시하고, Releases로 배포본을 묶고, Codespaces로 브라우저에서 개발하는 방법과 무료 사용량을 정리했습니다.</description><content:encoded><![CDATA[<p>GitHub Actions는 저장소에서 일어난 일을 계기로 검사와 배포를 자동으로 실행하는 기능이고, 같은 계정에서 Pages로 정적 사이트를 게시하고 Releases로 배포본을 묶고 Codespaces로 클라우드 개발 환경을 열 수 있습니다. 이 글은 소스 저장소로만 쓰던 사용자가 저장소 밖의 작업까지 GitHub 안에서 처리하는 방법을 정리했습니다.</p>
+<p>협업 기능은 <a href="https://dev.route50.kr/posts/github-guide-1/">1. GitHub 이슈, 풀 리퀘스트, 프로젝트로 협업하기</a>, 보안 설정은 <a href="https://dev.route50.kr/posts/github-guide-3/">3. GitHub 계정과 저장소 보안 설정하기</a>에 있습니다. 기준은 2026-11-06에 확인한 GitHub Docs입니다. 무료 사용량은 요금제와 시점에 따라 바뀌므로 적용 전 계정의 청구 화면도 확인합니다. 워크플로 파일은 예시를 싣지 않았고, 이 글에 직접 실행한 결과는 없습니다.</p>
+<h2 id="github-actions로-검사와-배포-자동화하기">GitHub Actions로 검사와 배포 자동화하기</h2>
+<p>GitHub Actions의 워크플로(workflow)는 하나 이상의 작업(job)을 실행하는 자동화 절차로, 저장소의 <a href="#term-yaml">YAML</a> 파일에 정의합니다. 이벤트가 일어나거나 사용자가 직접 요청하거나 일정에 따라 실행됩니다. (<a href="https://docs.github.com/en/actions/get-started/understand-github-actions">Understanding GitHub Actions</a>)</p>
+<p>용어는 네 가지만 알면 됩니다. 이벤트(event)는 풀 리퀘스트를 열거나 커밋을 푸시하는 것처럼 워크플로를 시작시키는 저장소 안의 활동입니다. 작업(job)은 같은 러너에서 실행되는 단계들의 묶음이며 기본적으로 병렬로 실행됩니다. 러너(runner)는 워크플로를 실제로 실행하는 서버이고 한 번에 작업 하나를 맡습니다. 워크플로 파일은 저장소의 <code>.github/workflows</code> 디렉터리에 두며, 파일을 여러 개 둘 수 있습니다.</p>
+<p>흔한 용도는 풀 리퀘스트가 열릴 때 테스트와 문법 검사를 돌리는 것입니다. 1편의 풀 리퀘스트와 결합하면 검사를 통과한 변경만 병합하는 흐름이 만들어집니다.</p>
+<h3 id="무료-사용량">무료 사용량</h3>
+<p>공개 저장소에서는 표준 GitHub 호스티드 러너가 무료이고 포함 사용량에서 차감되지 않습니다. 비공개 저장소는 분 단위가 아니라 금액으로 표시된 포함 사용량이 월마다 주어집니다. (<a href="https://docs.github.com/en/billing/concepts/product-billing/github-actions">GitHub Actions billing</a>)</p>
+<table>
+	<thead>
+			<tr>
+					<th>요금제</th>
+					<th>월 포함 사용량</th>
+					<th>아티팩트 저장소</th>
+					<th>캐시 저장소(저장소당)</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>GitHub Free</td>
+					<td>12달러</td>
+					<td>500MB</td>
+					<td>10GB</td>
+			</tr>
+			<tr>
+					<td>GitHub Pro</td>
+					<td>18달러</td>
+					<td>1GB</td>
+					<td>10GB</td>
+			</tr>
+			<tr>
+					<td>GitHub Team</td>
+					<td>18달러</td>
+					<td>2GB</td>
+					<td>10GB</td>
+			</tr>
+	</tbody>
+</table>
+<p>아티팩트 저장소는 GitHub Packages와 나누어 씁니다. 캐시 저장소는 별도 한도입니다.</p>
+<h2 id="github-pages로-사이트-게시하기">GitHub Pages로 사이트 게시하기</h2>
+<p>GitHub Pages는 저장소의 HTML, CSS, JavaScript 파일을 게시하는 정적 사이트 호스팅 서비스이고, 빌드 단계는 선택입니다. 사용자 또는 조직 사이트는 <code>&lt;owner&gt;.github.io</code> 이름의 저장소에 두며 계정당 하나, 프로젝트 사이트는 저장소마다 하나입니다. <code>github.io</code> 주소나 직접 가진 도메인을 쓸 수 있습니다. (<a href="https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages">What is GitHub Pages?</a>)</p>
+<p>게시 방식은 두 가지입니다. 브랜치에서 배포하는 방식은 고른 브랜치에 푸시하면 게시되며 저장소 루트나 <code>/docs</code> 폴더를 지정합니다. GitHub Actions 방식은 직접 만든 워크플로로 빌드해서 Jekyll 외의 도구도 쓸 수 있고, 빌드 결과물을 위한 전용 브랜치가 필요 없습니다. 이 블로그처럼 Hugo로 만든 사이트는 후자에 해당합니다. 어느 쪽이든 저장소가 비공개여도 사이트는 누구나 볼 수 있다는 점은 주의해야 합니다. (<a href="https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site">Configuring a publishing source</a>)</p>
+<h2 id="releases로-배포본-묶기">Releases로 배포본 묶기</h2>
+<p>릴리스는 소프트웨어를 다른 사람이 내려받아 쓸 수 있게 묶은 배포 단위이며, Git 태그를 바탕으로 합니다. 릴리스에는 릴리스 노트, 첨부 파일, 소스 아카이브가 들어갑니다. 릴리스 노트는 직접 쓰거나 템플릿으로 생성할 수 있고, 첨부 파일은 릴리스당 최대 1,000개, 파일당 2GiB 미만입니다. 태그가 가리키는 시점의 소스는 zip과 tarball로 자동 제공됩니다. (<a href="https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases">About releases</a>)</p>
+<p>태그를 만든 날과 릴리스를 만든 날은 다를 수 있습니다.</p>
+<h2 id="codespaces로-브라우저에서-개발하기">Codespaces로 브라우저에서 개발하기</h2>
+<p>Codespace는 클라우드에서 실행되는 개발 환경입니다. 각 codespace는 가상 머신 위의 Docker 컨테이너에서 돌아가며, 2코어 8GB RAM 32GB 저장소부터 32코어 128GB RAM 128GB 저장소까지 사양을 고를 수 있습니다. 템플릿이나 저장소의 어느 브랜치, 커밋에서도 만들 수 있고, 브라우저, Visual Studio Code, GitHub CLI로 접속합니다. (<a href="https://docs.github.com/en/codespaces/about-codespaces/what-are-codespaces">What are GitHub Codespaces?</a>)</p>
+<p>Free와 Pro 개인 계정에는 월 무료 사용량이 있고, Free는 월 120시간의 컴퓨트와 15GB-월 저장소, Pro는 180시간과 20GB-월입니다. 다만 이 시간은 머신의 코어 수만큼 배수가 곱해져 차감되는 것으로 보이므로, 정확한 계산은 계정의 사용량 보고서에서 확인합니다. 결제 수단이 없으면 한도에 닿을 때 사용이 멈춥니다. (<a href="https://docs.github.com/en/billing/concepts/product-billing/github-codespaces">GitHub Codespaces billing</a>)</p>
+<h2 id="참고-자료">참고 자료</h2>
+<ul>
+<li><a href="https://docs.github.com/en/actions/get-started/understand-github-actions">Understanding GitHub Actions</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/billing/concepts/product-billing/github-actions">GitHub Actions billing</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages">What is GitHub Pages?</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site">Configuring a publishing source for your GitHub Pages site</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases">About releases</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/codespaces/about-codespaces/what-are-codespaces">What are GitHub Codespaces?</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/billing/concepts/product-billing/github-codespaces">GitHub Codespaces billing</a>, GitHub Docs, 2026-11-06 확인</li>
+</ul>
+<h2 id="용어-설명">용어 설명</h2>
+<h3 id="term-yaml">YAML</h3>
+<p>들여쓰기로 구조를 나타내는 설정 파일 형식입니다. GitHub Actions 워크플로 파일은 이 형식으로 씁니다. (<a href="https://docs.github.com/en/actions/get-started/understand-github-actions">Understanding GitHub Actions</a>)</p>
+]]></content:encoded></item></channel></rss>

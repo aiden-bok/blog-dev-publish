@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>TypeORM on 휘발성 메모리 백업소</title><link>https://dev.route50.kr/tags/typeorm/</link><description>Recent content in TypeORM on 휘발성 메모리 백업소</description><image><title>휘발성 메모리 백업소</title><url>https://dev.route50.kr/about/cover.jpg</url><link>https://dev.route50.kr/about/cover.jpg</link></image><generator>Hugo</generator><language>ko-kr</language><lastBuildDate>Sun, 01 Nov 2026 02:42:15 +0900</lastBuildDate><atom:link href="https://dev.route50.kr/tags/typeorm/index.xml" rel="self" type="application/rss+xml"/><item><title>1. Prisma ORM 처음 써 보기와 다른 ORM과의 비교</title><link>https://dev.route50.kr/posts/prisma-orm-1/</link><pubDate>Sun, 01 Nov 2026 00:00:00 +0900</pubDate><guid>https://dev.route50.kr/posts/prisma-orm-1/</guid><description>Prisma ORM이 스키마 파일 하나로 마이그레이션과 타입을 만드는 방식과, TypeORM, Drizzle과 어디가 다른지 정리했습니다.</description><content:encoded><![CDATA[<p>Prisma는 Node.js와 TypeScript에서 쓰는 오픈소스 <a href="#term-orm">ORM</a>(Object-Relational Mapping: 객체 관계 매핑)입니다. 이 글은 Prisma 7 문서를 기준으로 정리했고, 확인한 2026-11-01에는 npm에 8.0.0-rc 버전도 올라와 있었습니다. 8 문서에는 <code>$transaction</code>에 쿼리 배열을 넘기던 형태가 없어졌다고 적혀 있어서, 버전을 올릴 때는 문서를 다시 봐야 합니다. 이 글의 코드는 공식 퀵스타트를 따라 정리한 것이고 직접 실행해서 확인한 것은 아닙니다.</p>
+<h2 id="prisma는-무엇으로-이루어져-있나">Prisma는 무엇으로 이루어져 있나</h2>
+<p>Prisma ORM은 세 부분으로 나뉩니다. Prisma Client는 스키마에서 자동으로 만들어지는 타입 안전 쿼리 도구이고, 결과는 평범한 JavaScript 객체로 돌아옵니다. Prisma Migrate는 <a href="#term-migration">마이그레이션</a>을 관리하고, Prisma Studio는 데이터를 눈으로 보고 고치는 화면입니다. 이 중 Studio만 오픈소스가 아니고 로컬에서만 실행됩니다. (<a href="https://www.prisma.io/docs/orm/overview/introduction/what-is-prisma">What is Prisma ORM?</a>)</p>
+<p>시작점은 <code>schema.prisma</code> 파일입니다. 데이터베이스 종류를 적는 <code>datasource</code>, 클라이언트를 어디에 만들지 정하는 <code>generator</code>, 테이블에 대응하는 <code>model</code>을 한 파일에 적습니다. Prisma 7부터 접속 주소는 스키마가 아니라 <code>prisma.config.ts</code>에 둡니다.</p>
+<pre tabindex="0"><code class="language-prisma" data-lang="prisma">generator client {
+  provider = &#34;prisma-client&#34;
+  output   = &#34;../generated/prisma&#34;
+}
+
+datasource db {
+  provider = &#34;sqlite&#34;
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  name  String?
+  posts Post[]
+}
+
+model Post {
+  id       Int    @id @default(autoincrement())
+  title    String
+  author   User   @relation(fields: [authorId], references: [id])
+  authorId Int
+}
+</code></pre><p>모델을 고친 뒤에는 두 가지 일을 해야 합니다. <code>prisma migrate dev</code>는 바뀐 부분을 <a href="#term-sql">SQL</a>(Structured Query Language: 구조화 질의 언어) 마이그레이션 파일로 만들어 데이터베이스에 적용하고, <code>prisma generate</code>는 코드에서 쓰는 클라이언트와 타입을 다시 만듭니다. 한 파일이 데이터베이스 쪽과 코드 쪽을 함께 이끄는 구조입니다.</p>
+<figure>
+    <img loading="lazy" src="prisma-workflow.svg"
+         alt="schema.prisma에서 migrate dev는 마이그레이션 SQL과 데이터베이스로, generate는 Prisma Client와 앱 코드로 이어지는 그림"/> <figcaption>
+            <p>그림 1. 스키마 하나에서 갈라지는 두 갈래 (직접 제작)</p>
+        </figcaption>
+</figure>
+
+<p>생성된 클라이언트로 쓰는 쿼리는 이렇게 생겼습니다. Prisma 7은 데이터베이스 드라이버를 어댑터로 따로 넘기는 방식이라, SQLite라면 <code>@prisma/adapter-better-sqlite3</code>를 설치해 <code>PrismaClient</code>에 넣어야 합니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-typescript" data-lang="typescript"><span style="display:flex;"><span><span style="color:#ff7b72">const</span> user <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#ff7b72">await</span> prisma.user.create({
+</span></span><span style="display:flex;"><span>  data<span style="color:#ff7b72;font-weight:bold">:</span> {
+</span></span><span style="display:flex;"><span>    email<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#39;alice@example.com&#39;</span>,
+</span></span><span style="display:flex;"><span>    name<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#39;Alice&#39;</span>,
+</span></span><span style="display:flex;"><span>    posts<span style="color:#ff7b72;font-weight:bold">:</span> { create<span style="color:#ff7b72;font-weight:bold">:</span> { title<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#39;Hello World&#39;</span> } },
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  include<span style="color:#ff7b72;font-weight:bold">:</span> { posts: <span style="color:#ff7b72">true</span> },
+</span></span><span style="display:flex;"><span>})
+</span></span></code></pre></div><p>사용자와 글을 한 번에 만들고, <code>include</code>로 관계까지 같이 가져옵니다. 여러 테이블을 묶는 쿼리를 직접 쓰지 않아도 되고, 결과의 타입도 스키마에서 정해집니다.</p>
+<h2 id="다른-orm과-비교">다른 ORM과 비교</h2>
+<p>Prisma 문서는 전통적인 ORM을 <a href="#term-active-record">Active Record</a>와 <a href="#term-data-mapper">Data Mapper</a>로 나누고, Prisma를 Data Mapper의 한 변형으로 봅니다. 스키마 하나가 타입, 마이그레이션, 매핑을 모두 정하기 때문에 코드의 클래스와 데이터베이스 스키마를 따로 맞춰 줄 필요가 줄어든다는 설명입니다. (<a href="https://www.prisma.io/docs/orm/overview/prisma-in-your-stack/is-prisma-an-orm">Is Prisma an ORM?</a>)</p>
+<p>같은 TypeScript 진영의 TypeORM과 Drizzle은 출발점이 다릅니다. TypeORM은 클래스에 <code>@Entity</code>, <code>@Column</code> 같은 데코레이터를 붙여 엔티티를 만들고, Data Mapper와 Active Record를 둘 다 지원합니다. (<a href="https://typeorm.io/">TypeORM</a>) Drizzle은 &ldquo;SQL을 알면 Drizzle도 안다&quot;는 방향이라, 테이블을 TypeScript 코드로 선언하고 SQL과 닮은 API로 쿼리를 씁니다. 관계 데이터를 한 번에 가져오는 별도 API도 있습니다. (<a href="https://orm.drizzle.team/docs/overview">Drizzle ORM</a>)</p>
+<figure>
+    <img loading="lazy" src="schema-location.svg"
+         alt="SQL 직접 작성, Drizzle, TypeORM, Prisma가 스키마를 정의하는 위치와 쿼리 모양을 비교한 표"/> <figcaption>
+            <p>그림 2. 스키마와 쿼리를 쓰는 방식 (직접 제작)</p>
+        </figcaption>
+</figure>
+
+<p>Prisma만의 특징은 스키마가 TypeScript가 아닌 별도 언어라는 점입니다. 덕분에 한 파일만 보면 데이터 모델 전체가 보이고 클라이언트와 마이그레이션이 거기서 나오지만, 스키마를 고칠 때마다 <code>generate</code>를 다시 돌려야 한다는 번거로움도 같이 옵니다. 반대로 Drizzle이나 TypeORM은 스키마가 곧 TypeScript 코드라서 별도 생성 단계가 필요 없습니다. 어느 쪽이 낫다기보다, 스키마를 코드 옆에 두고 싶은지 독립된 문서로 두고 싶은지의 차이에 가깝습니다.</p>
+<p>복잡한 쿼리는 ORM 전반의 약점입니다. Prisma 문서도 ORM의 단점으로 일부 복잡한 쿼리를 표현하기 어렵다는 점을 들고, 그럴 때는 SQL을 직접 쓰면 된다고 안내합니다. Prisma에는 <code>.sql</code> 파일에 쓴 쿼리에서 타입을 만들어 주는 TypedSQL이 있는데, 확인한 문서에서는 <code>typedSql</code> 미리보기 기능을 켜야 쓸 수 있었습니다. (<a href="https://www.prisma.io/docs/orm/prisma-client/using-raw-sql/typedsql">TypedSQL</a>)</p>
+<p>다음 글에서는 ORM을 쓰지 않고 SQL을 직접 쓰는 경우와 비교하고, AI 도구로 개발할 때 ORM이 어떤 영향을 주는지 정리합니다. <a href="https://dev.route50.kr/posts/prisma-orm-2/">2. ORM과 SQL 직접 작성, AI 도구와의 궁합</a></p>
+<h2 id="참고-자료">참고 자료</h2>
+<ul>
+<li><a href="https://www.prisma.io/docs/orm/overview/introduction/what-is-prisma">What is Prisma ORM?</a>, Prisma Documentation, 2026-11-01 확인</li>
+<li><a href="https://www.prisma.io/docs/orm/overview/prisma-in-your-stack/is-prisma-an-orm">Is Prisma an ORM?</a>, Prisma Documentation, 2026-11-01 확인</li>
+<li><a href="https://www.prisma.io/docs/prisma-orm/quickstart/sqlite">Quickstart: SQLite</a>, Prisma Documentation, 2026-11-01 확인</li>
+<li><a href="https://www.prisma.io/docs/orm/prisma-client/using-raw-sql/typedsql">TypedSQL</a>, Prisma Documentation, 2026-11-01 확인</li>
+<li><a href="https://www.prisma.io/docs/orm/prisma-client/queries/transactions">Transactions</a>, Prisma Documentation, 2026-11-01 확인</li>
+<li><a href="https://typeorm.io/">TypeORM</a>, TypeORM, 2026-11-01 확인</li>
+<li><a href="https://orm.drizzle.team/docs/overview">Drizzle ORM overview</a>, Drizzle Documentation, 2026-11-01 확인</li>
+</ul>
+<h2 id="용어-설명">용어 설명</h2>
+<h3 id="term-orm">ORM</h3>
+<p>Object-Relational Mapping(객체 관계 매핑). 코드의 객체와 관계형 데이터베이스의 테이블을 이어 주어, SQL을 직접 쓰지 않고도 데이터를 읽고 쓰게 하는 도구입니다. (<a href="https://www.prisma.io/docs/orm/overview/prisma-in-your-stack/is-prisma-an-orm">Prisma 문서</a>)</p>
+<h3 id="term-sql">SQL</h3>
+<p>Structured Query Language(구조화 질의 언어). 관계형 데이터베이스에 데이터를 묻고 바꾸는 표준 언어입니다. (<a href="https://www.prisma.io/docs/orm/prisma-client/using-raw-sql/typedsql">TypedSQL</a>)</p>
+<h3 id="term-migration">마이그레이션</h3>
+<p>Migration. 데이터베이스 구조(테이블, 컬럼)가 바뀐 내용을 파일로 기록하고 순서대로 적용하는 방식입니다. (<a href="https://www.prisma.io/docs/orm/prisma-migrate">Prisma Migrate</a>)</p>
+<h3 id="term-active-record">Active Record</h3>
+<p>모델 클래스가 테이블과 거의 일대일로 대응하고, 객체 하나가 행 하나를 감싸 저장까지 맡는 방식입니다. (<a href="https://www.prisma.io/docs/orm/overview/prisma-in-your-stack/is-prisma-an-orm">Is Prisma an ORM?</a>)</p>
+<h3 id="term-data-mapper">Data Mapper</h3>
+<p>엔티티 클래스는 데이터베이스를 모르고, 별도의 매퍼가 데이터 이동과 SQL 생성을 맡는 방식입니다. (<a href="https://www.prisma.io/docs/orm/overview/prisma-in-your-stack/is-prisma-an-orm">Is Prisma an ORM?</a>)</p>
+]]></content:encoded></item></channel></rss>

@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="cover-title cover-desc">
+  <title id="cover-title">n8n 2편 cover</title>
+  <desc id="cover-desc">진한 녹색 배경 왼쪽에 방패 모양 방화벽과 그 뒤의 컨테이너 상자, 오른쪽에 제목 'Docker로 n8n 설치'와 방화벽 설정 문구</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#022c22" />
+      <stop offset="1" stop-color="#115e59" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0.25" cy="0.5" r="0.55">
+      <stop offset="0" stop-color="#2dd4bf" stop-opacity="0.3" />
+      <stop offset="1" stop-color="#2dd4bf" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="shield" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5eead4" />
+      <stop offset="1" stop-color="#0d9488" />
+    </linearGradient>
+    <filter id="shadow" x="-40%" y="-40%" width="180%" height="190%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#01140f" flood-opacity="0.6" />
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect width="1200" height="630" fill="url(#glow)" />
+  <circle cx="1180" cy="40" r="220" fill="#34d399" fill-opacity="0.07" />
+
+  <!-- 컨테이너 상자 + 방패 -->
+  <g filter="url(#shadow)">
+    <rect x="96" y="232" width="360" height="232" rx="20" fill="#f0fdfa" />
+    <rect x="96" y="232" width="360" height="56" rx="20" fill="#ccfbf1" />
+    <rect x="96" y="268" width="360" height="20" fill="#ccfbf1" />
+  </g>
+  <g font-family="'JetBrains Mono', Menlo, Consolas, monospace">
+    <text x="128" y="268" font-size="22" font-weight="700" fill="#134e4a">n8nio/n8n</text>
+    <text x="128" y="348" font-size="24" fill="#0f766e">127.0.0.1:5678</text>
+    <rect x="128" y="376" width="296" height="44" rx="10" fill="#0d9488" />
+    <text x="276" y="406" font-size="22" font-weight="700" fill="#ffffff" text-anchor="middle">running</text>
+  </g>
+  <g transform="translate(190 40) scale(0.75)">
+    <g filter="url(#shadow)">
+      <path d="M276 128 L388 168 V252 C388 320 340 372 276 400 C212 372 164 320 164 252 V168 Z" fill="url(#shield)" stroke="#ccfbf1" stroke-width="4" />
+    </g>
+    <path d="M228 262 L266 300 L330 224" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="butt" stroke-linejoin="miter" />
+  </g>
+
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <rect x="600" y="92" width="200" height="44" rx="22" fill="#f59e0b" />
+    <text x="700" y="121" font-size="22" font-weight="700" fill="#1c1917" text-anchor="middle">2편 · Docker</text>
+    <text x="600" y="232" font-size="64" font-weight="800" fill="#f0fdfa">Docker로</text>
+    <text x="600" y="312" font-size="64" font-weight="800" fill="#f0fdfa">n8n 설치</text>
+    <rect x="600" y="344" width="96" height="6" rx="3" fill="#5eead4" />
+    <text x="600" y="404" font-size="30" font-weight="600" fill="#99f6e4">포트 바인딩 · ufw · HTTPS 프록시</text>
+    <text x="64" y="590" font-size="22" font-weight="600" fill="#5eead4">휘발성 메모리 백업소</text>
+    <text x="286" y="590" font-size="22" font-weight="400" fill="#99f6e4">dev.route50.kr</text>
+  </g>
+</svg>

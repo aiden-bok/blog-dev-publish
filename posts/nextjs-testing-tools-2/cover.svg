@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="cover-title cover-desc">
+  <title id="cover-title">Next.js 테스트 작성 2편 cover</title>
+  <desc id="cover-desc">남색 배경 왼쪽에 제목 'Next.js 테스트 작성', 오른쪽에 터미널 창 안의 vitest, migrate deploy, playwright test 명령</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#022c22" />
+      <stop offset="1" stop-color="#134e4a" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0.2" cy="0.1" r="0.6">
+      <stop offset="0" stop-color="#fbbf24" stop-opacity="0.22" />
+      <stop offset="1" stop-color="#fbbf24" stop-opacity="0" />
+    </radialGradient>
+    <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.6" fill="#ffffff" fill-opacity="0.07" />
+    </pattern>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="220%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#00110d" flood-opacity="0.6" />
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect width="1200" height="630" fill="url(#dots)" />
+  <rect width="1200" height="630" fill="url(#glow)" />
+
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <rect x="72" y="84" width="236" height="44" rx="22" fill="#fbbf24" fill-opacity="0.14" stroke="#fbbf24" stroke-opacity="0.6" />
+    <text x="190" y="113" font-size="20" font-weight="600" fill="#fcd34d" text-anchor="middle">Next.js · Testing</text>
+    <rect x="324" y="84" width="72" height="44" rx="22" fill="#f59e0b" />
+    <text x="360" y="113" font-size="20" font-weight="700" fill="#1c1917" text-anchor="middle">2편</text>
+    <text x="72" y="232" font-size="64" font-weight="800" fill="#f8fafc">Next.js 테스트</text>
+    <text x="72" y="304" font-size="40" font-weight="700" fill="#99f6e4">Prisma, PostgreSQL 작성법</text>
+    <rect x="72" y="344" width="96" height="6" rx="3" fill="#fbbf24" />
+    <text x="72" y="404" font-size="26" font-weight="500" fill="#5eead4">mock · 실제 DB · E2E</text>
+    <text x="72" y="566" font-size="22" font-weight="600" fill="#2dd4bf">휘발성 메모리 백업소</text>
+    <text x="294" y="566" font-size="22" font-weight="400" fill="#14b8a6">dev.route50.kr</text>
+  </g>
+
+  <g transform="translate(660 120)" filter="url(#shadow)">
+    <rect width="470" height="350" rx="20" fill="#06130f" stroke="#115e59" stroke-width="2" />
+    <rect width="470" height="52" rx="20" fill="#0b1f1b" />
+    <rect y="32" width="470" height="20" fill="#0b1f1b" />
+    <circle cx="30" cy="26" r="7" fill="#f87171" />
+    <circle cx="54" cy="26" r="7" fill="#fbbf24" />
+    <circle cx="78" cy="26" r="7" fill="#34d399" />
+    <g font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="22">
+      <text x="30" y="106"><tspan fill="#fbbf24">$</tspan><tspan fill="#f8fafc" dx="12">npx vitest</tspan></text>
+      <text x="30" y="156" fill="#34d399">✓ 컴포넌트</text>
+      <text x="30" y="216"><tspan fill="#fbbf24">$</tspan><tspan fill="#f8fafc" dx="12">prisma migrate deploy</tspan></text>
+      <text x="30" y="266" fill="#34d399">✓ 통합</text>
+      <text x="30" y="326"><tspan fill="#fbbf24">$</tspan><tspan fill="#f8fafc" dx="12">npx playwright test</tspan></text>
+    </g>
+  </g>
+</svg>

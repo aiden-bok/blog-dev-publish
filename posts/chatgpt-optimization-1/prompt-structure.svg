@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" role="img" aria-labelledby="t d">
+  <title id="t">프롬프트의 네 칸 구조</title>
+  <desc id="d">프롬프트를 배경, 요청, 조건, 출력 형식 네 칸으로 나누고 각 칸에 적을 내용을 한 줄씩 설명한 그림</desc>
+  <rect width="1200" height="560" rx="24" fill="#f8fafc" />
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <text x="64" y="96" font-size="36" font-weight="800" fill="#0f172a">프롬프트는 네 칸으로 나누어 쓴다</text>
+    <text x="64" y="140" font-size="24" fill="#334155">한 번에 결과물 하나만 요청하고, 빈 칸 없이 채운다</text>
+
+    <rect x="64" y="184" width="256" height="296" rx="20" fill="#e0f2fe" stroke="#0369a1" stroke-width="2" />
+    <circle cx="104" cy="228" r="20" fill="#0369a1" />
+    <text x="104" y="236" font-size="22" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+    <text x="136" y="236" font-size="28" font-weight="800" fill="#0c4a6e">배경</text>
+    <text x="88" y="296" font-size="22" fill="#0f172a">내 역할과 상황</text>
+    <text x="88" y="332" font-size="22" fill="#0f172a">가진 자료</text>
+    <text x="88" y="400" font-size="22" fill="#334155">예) 5명 동호회</text>
+    <text x="88" y="432" font-size="22" fill="#334155">총무입니다</text>
+
+    <rect x="344" y="184" width="256" height="296" rx="20" fill="#dcfce7" stroke="#15803d" stroke-width="2" />
+    <circle cx="384" cy="228" r="20" fill="#15803d" />
+    <text x="384" y="236" font-size="22" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+    <text x="416" y="236" font-size="28" font-weight="800" fill="#14532d">요청</text>
+    <text x="368" y="296" font-size="22" fill="#0f172a">원하는 결과물</text>
+    <text x="368" y="332" font-size="22" fill="#0f172a">딱 하나만</text>
+    <text x="368" y="400" font-size="22" fill="#334155">예) 공지 문안을</text>
+    <text x="368" y="432" font-size="22" fill="#334155">작성해 주세요</text>
+
+    <rect x="624" y="184" width="256" height="296" rx="20" fill="#fef3c7" stroke="#b45309" stroke-width="2" />
+    <circle cx="664" cy="228" r="20" fill="#b45309" />
+    <text x="664" y="236" font-size="22" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+    <text x="696" y="236" font-size="28" font-weight="800" fill="#78350f">조건</text>
+    <text x="648" y="296" font-size="22" fill="#0f172a">말투, 분량, 금지</text>
+    <text x="648" y="332" font-size="22" fill="#0f172a">모르면 지어내지 않기</text>
+    <text x="648" y="400" font-size="22" fill="#334155">예) 200자 이내</text>
+    <text x="648" y="432" font-size="22" fill="#334155">존댓말</text>
+
+    <rect x="904" y="184" width="232" height="296" rx="20" fill="#fce7f3" stroke="#be185d" stroke-width="2" />
+    <circle cx="944" cy="228" r="20" fill="#be185d" />
+    <text x="944" y="236" font-size="22" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+    <text x="976" y="236" font-size="28" font-weight="800" fill="#831843">출력 형식</text>
+    <text x="928" y="296" font-size="22" fill="#0f172a">표, 목록, 문단</text>
+    <text x="928" y="332" font-size="22" fill="#0f172a">몇 개로 줄지</text>
+    <text x="928" y="400" font-size="22" fill="#334155">예) 2가지를</text>
+    <text x="928" y="432" font-size="22" fill="#334155">번호로</text>
+  </g>
+</svg>

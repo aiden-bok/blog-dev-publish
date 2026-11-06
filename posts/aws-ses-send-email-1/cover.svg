@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="cover-title cover-desc">
+  <title id="cover-title">AWS SES 메일 발송 준비 1편 cover</title>
+  <desc id="cover-desc">짙은 남색 배경 왼쪽에 제목 'AWS SES 메일 발송 준비', 오른쪽에 DKIM, SPF, DMARC 확인 표시가 붙은 봉투 그림</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e1b4b" />
+      <stop offset="1" stop-color="#312e81" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0.78" cy="0.5" r="0.55">
+      <stop offset="0" stop-color="#f59e0b" stop-opacity="0.28" />
+      <stop offset="1" stop-color="#f59e0b" stop-opacity="0" />
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0 L0 0 L0 40" fill="none" stroke="#ffffff" stroke-opacity="0.05" stroke-width="1.5" />
+    </pattern>
+    <linearGradient id="env" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffbeb" />
+      <stop offset="1" stop-color="#fde68a" />
+    </linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="220%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#020617" flood-opacity="0.55" />
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect width="1200" height="630" fill="url(#grid)" />
+  <rect width="1200" height="630" fill="url(#glow)" />
+
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <rect x="72" y="84" width="196" height="44" rx="22" fill="#f59e0b" fill-opacity="0.16" stroke="#fbbf24" stroke-opacity="0.7" />
+    <text x="170" y="113" font-size="20" font-weight="600" fill="#fcd34d" text-anchor="middle">AWS · Email</text>
+    <rect x="284" y="84" width="72" height="44" rx="22" fill="#fbbf24" />
+    <text x="320" y="113" font-size="20" font-weight="700" fill="#1c1917" text-anchor="middle">1편</text>
+
+    <text x="72" y="238" font-size="88" font-weight="800" fill="#f8fafc">AWS SES</text>
+    <text x="72" y="312" font-size="48" font-weight="700" fill="#e0e7ff">도메인 인증과 샌드박스</text>
+    <rect x="72" y="352" width="96" height="6" rx="3" fill="#fbbf24" />
+    <text x="72" y="410" font-size="26" font-weight="500" fill="#c7d2fe">DKIM · SPF · 샌드박스 해제</text>
+
+    <text x="72" y="566" font-size="22" font-weight="600" fill="#a5b4fc">휘발성 메모리 백업소</text>
+    <text x="294" y="566" font-size="22" font-weight="400" fill="#818cf8">dev.route50.kr</text>
+  </g>
+
+  <!-- 봉투 그림 -->
+  <g transform="translate(700 130)" filter="url(#shadow)">
+    <rect width="420" height="290" rx="20" fill="url(#env)" />
+    <path d="M0 20 Q0 0 20 0 L400 0 Q420 0 420 20 L210 168 Z" fill="#fbbf24" />
+    <path d="M0 290 L150 150 M420 290 L270 150" stroke="#d97706" stroke-width="3" stroke-opacity="0.5" fill="none" />
+    <circle cx="210" cy="150" r="30" fill="#4f46e5" />
+    <path d="M196 150 L206 160 L225 140" fill="none" stroke="#ffffff" stroke-width="6" stroke-linejoin="miter" stroke-linecap="butt" />
+  </g>
+
+  <!-- 확인 배지 3개 -->
+  <g font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="24" font-weight="700" filter="url(#shadow)">
+    <rect x="700" y="450" width="124" height="60" rx="14" fill="#ecfdf5" stroke="#34d399" stroke-width="3" />
+    <text x="762" y="490" fill="#065f46" text-anchor="middle">DKIM</text>
+    <rect x="858" y="450" width="124" height="60" rx="14" fill="#ecfdf5" stroke="#34d399" stroke-width="3" />
+    <text x="920" y="490" fill="#065f46" text-anchor="middle">SPF</text>
+    <rect x="1016" y="450" width="124" height="60" rx="14" fill="#ecfdf5" stroke="#34d399" stroke-width="3" />
+    <text x="1078" y="490" fill="#065f46" text-anchor="middle">DMARC</text>
+  </g>
+</svg>

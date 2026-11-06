@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="cover-title cover-desc">
+  <title id="cover-title">CSP 2편 cover</title>
+  <desc id="cover-desc">밝은 베이지 배경 위쪽에 제목 'CSP를 프레임워크에 적용하기', 아래쪽에 요청, nonce 발급, 응답 세 단계를 화살표로 이은 카드 세 장</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff7ed" />
+      <stop offset="1" stop-color="#fde8d0" />
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#7c2d12" flood-opacity="0.22" />
+    </filter>
+    <marker id="arrow" viewBox="0 0 14 14" refX="12" refY="7" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M7 2 L12 7 L7 12" fill="none" stroke="#9a3412" stroke-width="2.5" stroke-linejoin="miter" stroke-linecap="butt" />
+    </marker>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <circle cx="1120" cy="70" r="200" fill="#fdba74" fill-opacity="0.35" />
+  <circle cx="60" cy="640" r="160" fill="#fdba74" fill-opacity="0.3" />
+
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <rect x="72" y="64" width="200" height="44" rx="22" fill="#9a3412" />
+    <text x="172" y="93" font-size="20" font-weight="700" fill="#fff7ed" text-anchor="middle">Next.js · Vue</text>
+    <rect x="288" y="64" width="72" height="44" rx="22" fill="#0f766e" />
+    <text x="324" y="93" font-size="20" font-weight="700" fill="#f0fdfa" text-anchor="middle">2편</text>
+    <text x="72" y="190" font-size="58" font-weight="800" fill="#431407">CSP를 프레임워크에 적용하기</text>
+    <text x="72" y="244" font-size="28" font-weight="500" fill="#7c2d12">nonce 발급 · unsafe-eval 제거 · 실무 기본 정책</text>
+
+    <g filter="url(#shadow)">
+      <rect x="72" y="320" width="304" height="200" rx="20" fill="#ffffff" />
+      <rect x="448" y="320" width="304" height="200" rx="20" fill="#ffffff" />
+      <rect x="824" y="320" width="304" height="200" rx="20" fill="#ffffff" />
+    </g>
+    <text x="104" y="372" font-size="26" font-weight="800" fill="#9a3412">1 요청</text>
+    <text x="104" y="424" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="22" fill="#292524">GET /</text>
+    <text x="104" y="470" font-size="22" fill="#57534e">서버에 도착</text>
+    <text x="480" y="372" font-size="26" font-weight="800" fill="#9a3412">2 nonce 발급</text>
+    <text x="480" y="424" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="22" fill="#292524">nonce-R4nd0m</text>
+    <text x="480" y="470" font-size="22" fill="#57534e">요청마다 새 값</text>
+    <text x="856" y="372" font-size="26" font-weight="800" fill="#9a3412">3 응답</text>
+    <text x="856" y="424" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="22" fill="#292524">script nonce</text>
+    <text x="856" y="470" font-size="22" fill="#57534e">헤더와 태그 일치</text>
+    <g stroke="#9a3412" stroke-width="2.5" stroke-linecap="butt" fill="none" marker-end="url(#arrow)">
+      <line x1="382" y1="420" x2="442" y2="420" />
+      <line x1="758" y1="420" x2="818" y2="420" />
+    </g>
+    <text x="72" y="590" font-size="22" font-weight="600" fill="#9a3412">휘발성 메모리 백업소</text>
+    <text x="294" y="590" font-size="22" font-weight="400" fill="#9a3412">dev.route50.kr</text>
+  </g>
+</svg>

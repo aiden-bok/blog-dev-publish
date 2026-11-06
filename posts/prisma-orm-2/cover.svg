@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="cover-title cover-desc">
+  <title id="cover-title">Prisma ORM 2편 cover</title>
+  <desc id="cover-desc">짙은 청록색 배경 위쪽에 제목, 아래쪽에 TypeScript 코드 창, SQL 문장, 데이터베이스 그림이 화살표로 이어진 모습</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#042f2e" />
+      <stop offset="1" stop-color="#0f4c4a" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="1" r="0.8">
+      <stop offset="0" stop-color="#2dd4bf" stop-opacity="0.28" />
+      <stop offset="1" stop-color="#2dd4bf" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="db" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#d97706" />
+      <stop offset="1" stop-color="#fbbf24" />
+    </linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="220%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#021a19" flood-opacity="0.6" />
+    </filter>
+    <marker id="arrow" viewBox="0 0 14 14" refX="12" refY="7" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M7 2 L12 7 L7 12" fill="none" stroke="#99f6e4" stroke-width="2.5" stroke-linejoin="miter" stroke-linecap="butt" />
+    </marker>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect width="1200" height="630" fill="url(#glow)" />
+  <g stroke="#ffffff" stroke-opacity="0.05" stroke-width="2">
+    <line x1="0" y1="410" x2="1200" y2="410" />
+    <line x1="0" y1="450" x2="1200" y2="450" />
+    <line x1="0" y1="490" x2="1200" y2="490" />
+  </g>
+
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif" text-anchor="middle">
+    <text x="600" y="130" font-size="80" font-weight="800" fill="#f0fdfa">Prisma ORM</text>
+    <text x="600" y="198" font-size="44" font-weight="700" fill="#fbbf24">2편 · SQL, AI 도구와 함께</text>
+    <text x="600" y="590" font-size="22" font-weight="600" fill="#5eead4">휘발성 메모리 백업소 · dev.route50.kr</text>
+  </g>
+
+  <g transform="translate(96 270)" filter="url(#shadow)">
+    <rect width="380" height="232" rx="18" fill="#0b1220" stroke="#334155" stroke-width="2" />
+    <rect width="380" height="44" rx="18" fill="#111a2e" />
+    <rect y="26" width="380" height="18" fill="#111a2e" />
+    <circle cx="28" cy="22" r="6" fill="#f87171" />
+    <circle cx="48" cy="22" r="6" fill="#fbbf24" />
+    <circle cx="68" cy="22" r="6" fill="#34d399" />
+    <g font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="22">
+      <text x="28" y="94"><tspan fill="#7dd3fc">prisma</tspan><tspan fill="#f8fafc">.user</tspan></text>
+      <text x="28" y="130"><tspan fill="#f8fafc">.</tspan><tspan fill="#fbbf24">findMany</tspan><tspan fill="#f8fafc">(</tspan></text>
+      <text x="52" y="166"><tspan fill="#7dd3fc">where</tspan><tspan fill="#f8fafc">: ...</tspan></text>
+      <text x="28" y="202" fill="#f8fafc">)</text>
+    </g>
+  </g>
+
+  <g transform="translate(560 306)" filter="url(#shadow)">
+    <rect width="300" height="160" rx="18" fill="#f0fdfa" />
+    <g font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="22" font-weight="700">
+      <text x="28" y="56" fill="#0f766e">SELECT *</text>
+      <text x="28" y="92" fill="#0f766e">FROM User</text>
+      <text x="28" y="128" fill="#0f766e">WHERE ...</text>
+    </g>
+  </g>
+
+  <g transform="translate(980 330)" filter="url(#shadow)">
+    <path d="M0 22 v100 a64 22 0 0 0 128 0 v-100" fill="url(#db)" />
+    <ellipse cx="64" cy="22" rx="64" ry="22" fill="#fde68a" />
+    <path d="M0 60 a64 22 0 0 0 128 0 M0 94 a64 22 0 0 0 128 0" fill="none" stroke="#fffbeb" stroke-opacity="0.6" stroke-width="3" />
+  </g>
+
+  <g stroke="#99f6e4" stroke-width="2.5" stroke-linecap="butt" fill="none" marker-end="url(#arrow)">
+    <line x1="488" y1="386" x2="552" y2="386" />
+    <line x1="872" y1="386" x2="972" y2="386" />
+  </g>
+</svg>

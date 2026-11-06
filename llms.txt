@@ -1,0 +1,36 @@
+# 휘발성 메모리 백업소
+
+> 경력만큼 잊는 것도 쌓이는 개발자의 휘발되는 기억을 붙잡아 두는 학습 노트
+
+휘발성 메모리 백업소는 한국어로 쓰는 개발 학습 노트 블로그입니다. 글마다 참고한 공식 문서와 확인한 날짜, 기준 버전, 용어 설명을 적습니다. 작성자 소개는 [About](https://dev.route50.kr/about/)에 있습니다.
+
+## 글
+
+- [3. GitHub 계정과 저장소 보안 설정하기](https://dev.route50.kr/posts/github-guide-3/): GitHub 계정의 2단계 인증과 passkey, 브랜치 보호 규칙과 규칙 세트, Dependabot, 비밀 정보 푸시 차단 기능을 공식 문서 기준으로 정리했습니다.
+- [2. GitHub Actions, Pages, Releases, Codespaces로 자동화하기](https://dev.route50.kr/posts/github-guide-2/): GitHub Actions로 검사를 자동화하고, Pages로 사이트를 게시하고, Releases로 배포본을 묶고, Codespaces로 브라우저에서 개발하는 방법과 무료 사용량을 정리했습니다.
+- [1. GitHub 이슈, 풀 리퀘스트, 프로젝트로 협업하기](https://dev.route50.kr/posts/github-guide-1/): 소스 저장소로만 쓰던 GitHub에서 이슈, 풀 리퀘스트, Projects, Discussions, 프로필 README를 쓰는 방법을 공식 문서 기준으로 정리했습니다.
+- [3. ChatGPT를 쓸 때 주의할 점](https://dev.route50.kr/posts/chatgpt-optimization-3/): ChatGPT에 민감한 정보를 넣기 전에 알아야 할 데이터 사용 설정, 임시 채팅, 피드백 예외와 답변을 검증하는 방법을 OpenAI 공식 문서 기준으로 정리했습니다.
+- [2. 기획자, 디자이너, 개발자, 운영자별 ChatGPT 활용법](https://dev.route50.kr/posts/chatgpt-optimization-2/): 기획자, 디자이너, 개발자, 운영자가 ChatGPT에 역할과 판단 기준을 알려 주고 결과를 검증하는 방법을 OpenAI 프롬프트 가이드 기준으로 직군별 프롬프트 예시와 함께 정리했습니다.
+- [1. 일반 사용자를 위한 ChatGPT 프롬프트와 설정](https://dev.route50.kr/posts/chatgpt-optimization-1/): ChatGPT에서 좋은 답을 얻는 프롬프트 작성 틀과 Custom Instructions, 메모리, 프로젝트, 임시 채팅 설정의 차이를 OpenAI 공식 문서 기준으로 정리했습니다.
+- [2. AWS SES SMTP와 SDK로 메일 발송하기](https://dev.route50.kr/posts/aws-ses-send-email-2/): AWS SES로 메일을 보내는 두 방법인 SMTP 인터페이스와 API를 비교하고, SMTP 자격 증명 발급, Nodemailer 연동, AWS SDK for JavaScript v3의 SendEmailCommand 코드를 정리했습니다.
+- [1. AWS SES 도메인 인증, DKIM, SPF, 샌드박스 해제](https://dev.route50.kr/posts/aws-ses-send-email-1/): AWS SES에서 도메인 자격 증명을 만들고 DKIM CNAME과 MAIL FROM(SPF) 레코드를 등록해 인증한 뒤, 샌드박스를 해제해 아무에게나 보낼 수 있게 만드는 과정을 정리했습니다.
+- [2. DBeaver 설치와 기본 사용법](https://dev.route50.kr/posts/dbeaver-2/): DBeaver Community를 Windows, macOS, Linux에 설치하는 방법과 새 연결 만들기, SQL 실행 단축키, 결과 내보내기까지 기본 사용법을 공식 문서 기준으로 정리했습니다.
+- [1. 데이터베이스 관리 툴 비교와 DBeaver](https://dev.route50.kr/posts/dbeaver-1/): DBeaver, DataGrip, pgAdmin, MySQL Workbench, HeidiSQL의 지원 데이터베이스와 라이선스를 비교하고, 여러 DB를 한 도구로 다룰 때 DBeaver가 맞는 경우를 정리했습니다.
+- [2. Next.js, Prisma, PostgreSQL 테스트 작성 방법](https://dev.route50.kr/posts/nextjs-testing-tools-2/): Vitest로 컴포넌트를 테스트하고, Prisma Client를 mock으로 대체하는 단위 테스트와 Docker PostgreSQL을 쓰는 통합 테스트, Playwright E2E 실행 방법을 정리했습니다.
+- [1. Next.js 테스트 종류와 도구: Vitest, Jest, Playwright 비교](https://dev.route50.kr/posts/nextjs-testing-tools-1/): Next.js, React, Prisma, PostgreSQL 조합에서 단위, 컴포넌트, 통합, E2E 테스트가 확인하는 것과 Vitest, Jest, Playwright, Cypress의 차이를 정리했습니다.
+- [2. CSP를 React, Next.js, Vue에 적용하기와 실무 기본 정책](https://dev.route50.kr/posts/csp-2/): React, Next.js, Vue에서 CSP를 적용할 때 부딪히는 인라인 스크립트와 unsafe-eval 문제, nonce 설정 방법, 실무에서 출발점으로 삼는 기본 정책을 정리했습니다.
+- [1. CSP란 무엇인가: 필요한 이유, 동작 방식, 주요 지시어](https://dev.route50.kr/posts/csp-1/): Content Security Policy(CSP)가 XSS 피해를 줄이는 원리와 default-src, script-src 같은 주요 지시어, self, nonce 같은 키워드의 뜻을 정리했습니다.
+- [2. n8n을 Docker로 설치하고 방화벽 설정하기](https://dev.route50.kr/posts/n8n-2/): n8n을 Docker 볼륨과 Docker Compose로 설치하는 방법과, Docker가 ufw를 우회하는 문제를 피해 5678 포트를 안전하게 여는 방화벽 설정을 정리했습니다.
+- [1. n8n이란 무엇인가: 클라우드와 설치 버전의 차이, OS별 설치](https://dev.route50.kr/posts/n8n-1/): n8n 워크플로 자동화 도구의 클라우드 버전과 직접 설치하는 버전의 비용, 관리 범위, 라이선스 차이와 npm으로 OS별 설치하는 방법을 정리했습니다.
+- [Ollama 설치와 사용법: 로컬 모델 실행과 REST API 호출](https://dev.route50.kr/posts/ollama-local-llm-runner/): Ollama를 macOS, Windows, Linux에 설치하고 모델을 내려받아 실행하는 방법, localhost:11434 REST API로 호출하는 방법을 정리했습니다.
+- [2. 모노레포와 AI 코딩 도구: 컨텍스트 범위 정하기](https://dev.route50.kr/posts/monorepo-2/): AI 코딩 도구가 서버와 웹, 공용 코드를 한 번에 다루게 하는 모노레포 구성과, AGENTS.md와 시작 위치로 읽는 범위를 좁히는 방법을 정리했습니다.
+- [1. 모노레포란 무엇인가: 구조와 워크스페이스](https://dev.route50.kr/posts/monorepo-1/): 서버, 웹, 모바일 앱 소스를 한 저장소에 두는 모노레포의 정의와 폴더 구성, pnpm 워크스페이스와 Turborepo 설정 방법을 정리했습니다.
+- [로컬 LLM 개발을 시작할 때 알아야 할 핵심 지식](https://dev.route50.kr/posts/local-llm-guide/): 로컬 환경에서 대규모 언어 모델을 구동하고 개발하기 위해 필요한 VRAM 계산법, 양자화 포맷, 추론 엔진 선택 기준을 정리했습니다.
+- [2. ORM과 SQL 직접 작성, AI 도구와의 궁합](https://dev.route50.kr/posts/prisma-orm-2/): ORM을 쓰는 경우와 SQL을 직접 쓰는 경우의 장단점을 비교하고, AI 도구로 개발할 때 Prisma가 주는 이점과 주의점을 정리했습니다.
+- [1. Prisma ORM 처음 써 보기와 다른 ORM과의 비교](https://dev.route50.kr/posts/prisma-orm-1/): Prisma ORM이 스키마 파일 하나로 마이그레이션과 타입을 만드는 방식과, TypeORM, Drizzle과 어디가 다른지 정리했습니다.
+
+## Optional
+
+- [태그 목록](https://dev.route50.kr/tags/): 주제별 글 모음
+- [RSS](https://dev.route50.kr/index.xml): 글 전문을 담은 피드
+- [사이트맵](https://dev.route50.kr/sitemap.xml)

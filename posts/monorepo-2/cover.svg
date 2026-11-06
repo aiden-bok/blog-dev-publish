@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="cover-title cover-desc">
+  <title id="cover-title">모노레포와 AI 코딩 도구 2편 cover</title>
+  <desc id="cover-desc">어두운 보라색 배경 위쪽에 제목 '모노레포와 AI 코딩 도구', 아래쪽에 apps/web 폴더에서 AI 도구를 실행하고 루트와 web의 AGENTS.md가 읽히는 터미널 창</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e1038" />
+      <stop offset="1" stop-color="#0b1b33" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0.15" cy="0.05" r="0.7">
+      <stop offset="0" stop-color="#a78bfa" stop-opacity="0.3" />
+      <stop offset="1" stop-color="#a78bfa" stop-opacity="0" />
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-30%" width="140%" height="170%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000000" flood-opacity="0.55" />
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect width="1200" height="630" fill="url(#glow)" />
+
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <rect x="72" y="60" width="152" height="44" rx="22" fill="#a78bfa" fill-opacity="0.18" stroke="#c4b5fd" stroke-opacity="0.7" />
+    <text x="148" y="89" font-size="20" font-weight="600" fill="#ddd6fe" text-anchor="middle">Monorepo</text>
+    <rect x="240" y="60" width="72" height="44" rx="22" fill="#fbbf24" />
+    <text x="276" y="89" font-size="20" font-weight="700" fill="#1c1917" text-anchor="middle">2편</text>
+    <text x="72" y="190" font-size="64" font-weight="800" fill="#f8fafc">모노레포와 AI 코딩 도구</text>
+    <text x="72" y="238" font-size="26" font-weight="500" fill="#a5b4fc">컨텍스트 범위 · AGENTS.md · 폴더 단위 작업</text>
+    <text x="1128" y="89" font-size="22" font-weight="600" fill="#94a3b8" text-anchor="end">휘발성 메모리 백업소</text>
+  </g>
+
+  <g transform="translate(72 288)" filter="url(#shadow)">
+    <rect width="1056" height="268" rx="20" fill="#0a0f1f" stroke="#3b3f66" stroke-width="2" />
+    <rect width="1056" height="52" rx="20" fill="#141a33" />
+    <rect y="32" width="1056" height="20" fill="#141a33" />
+    <circle cx="30" cy="26" r="7" fill="#f87171" />
+    <circle cx="54" cy="26" r="7" fill="#fbbf24" />
+    <circle cx="78" cy="26" r="7" fill="#34d399" />
+    <text x="528" y="33" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="18" fill="#94a3b8" text-anchor="middle">my-product/apps/web</text>
+    <g font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="26">
+      <text x="36" y="108" fill="#a78bfa" font-weight="700">$</text>
+      <text x="72" y="108" fill="#f1f5f9">claude</text>
+      <text x="36" y="158" fill="#34d399">+</text>
+      <text x="72" y="158" fill="#e2e8f0">AGENTS.md</text>
+      <text x="640" y="158" fill="#94a3b8">루트: 공통 규칙</text>
+      <text x="36" y="204" fill="#34d399">+</text>
+      <text x="72" y="204" fill="#e2e8f0">apps/web/AGENTS.md</text>
+      <text x="640" y="204" fill="#94a3b8">web 규칙</text>
+      <text x="36" y="250" fill="#64748b">-</text>
+      <text x="72" y="250" fill="#64748b">apps/server/AGENTS.md</text>
+      <text x="640" y="250" fill="#64748b">지금 작업과 무관</text>
+    </g>
+  </g>
+</svg>

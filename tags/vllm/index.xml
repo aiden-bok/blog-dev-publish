@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>VLLM on 휘발성 메모리 백업소</title><link>https://dev.route50.kr/tags/vllm/</link><description>Recent content in VLLM on 휘발성 메모리 백업소</description><image><title>휘발성 메모리 백업소</title><url>https://dev.route50.kr/about/cover.jpg</url><link>https://dev.route50.kr/about/cover.jpg</link></image><generator>Hugo</generator><language>ko-kr</language><lastBuildDate>Sun, 01 Nov 2026 12:34:11 +0900</lastBuildDate><atom:link href="https://dev.route50.kr/tags/vllm/index.xml" rel="self" type="application/rss+xml"/><item><title>로컬 LLM 개발을 시작할 때 알아야 할 핵심 지식</title><link>https://dev.route50.kr/posts/local-llm-guide/</link><pubDate>Sun, 01 Nov 2026 00:00:00 +0900</pubDate><guid>https://dev.route50.kr/posts/local-llm-guide/</guid><description>로컬 환경에서 대규모 언어 모델을 구동하고 개발하기 위해 필요한 VRAM 계산법, 양자화 포맷, 추론 엔진 선택 기준을 정리했습니다.</description><content:encoded><![CDATA[<p>클라우드 인공지능 API는 인프라 구축 없이 언어 모델 기능을 쓸 수 있지만, 사내 기밀이나 개인정보를 외부로 전송하기 어려운 한계가 있습니다. 호출 횟수에 비례해 늘어나는 토큰 비용과 네트워크 지연도 지속적인 서비스 개발에 부담이 됩니다.</p>
+<p>자체 하드웨어에서 모델을 실행하는 <a href="#term-llm">LLM</a>(Large Language Model: 대규모 언어 모델) 개발 환경은 네트워크 연결 없이도 데이터를 안전하게 처리합니다. 개발 과정에서 수만 번의 프롬프트 호출을 비용 없이 실험할 수 있는 점도 이점입니다. 다만 로컬 환경에서는 물리적 하드웨어 자원이 제한되므로, 파라미터 크기에 따른 메모리 사용량과 양자화 포맷의 특성을 파악해야 안정적인 개발 환경을 구성할 수 있습니다.</p>
+<h2 id="메모리와-하드웨어-요구사항-계산">메모리와 하드웨어 요구사항 계산</h2>
+<p>LLM 추론(Inference) 단계에서는 <a href="#term-gpu">GPU</a>(Graphics Processing Unit: 그래픽 처리 장치)의 연산 속도(FLOPS)보다 <a href="#term-vram">VRAM</a>(Video Random Access Memory: 비디오 램)의 용량과 메모리 대역폭이 토큰 생성 속도를 결정합니다. 단어를 하나 생성할 때마다 모델의 모든 가중치를 메모리에서 읽어와야 하기 때문입니다.</p>
+<p>구동에 필요한 최소 메모리는 모델의 파라미터 수와 가중치 데이터 정밀도로 계산합니다. <a href="#term-fp16">FP16</a>(16-bit Floating Point: 16비트 반정밀도 부동소수점) 형식의 원본 가중치는 파라미터 1개당 2바이트를 차지합니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>필요 메모리 = 파라미터 수 × 가중치 바이트 수 + KV 캐시 및 런타임 여유분(약 20%)
+</span></span></code></pre></div><p>8B(80억 개) 파라미터 모델을 FP16 정밀도로 올리면 순수 가중치만 16GB를 차지합니다. 대화 문맥을 유지하기 위한 <a href="#term-kv-cache">KV 캐시</a>(Key-Value Cache: 키-값 캐시)와 실행 버퍼를 더하면 최소 20GB 이상의 메모리가 필요합니다. 70B 모델은 FP16 기준으로 140GB 이상의 VRAM이 필요해 일반 개인용 그래픽 카드로는 구동할 수 없습니다.</p>
+<p>하드웨어 환경에 따라 선택지가 나뉩니다.</p>
+<ul>
+<li><strong>NVIDIA GPU</strong>: <a href="#term-cuda">CUDA</a>(Compute Unified Device Architecture: 쿠다) 생태계의 지원으로 연산 속도가 빠르고 다양한 서빙 프레임워크를 그대로 씁니다. 다만 소비자용 제품군인 GeForce RTX 4080(16GB), RTX 4090(24GB) 등은 VRAM 한계가 있어 단일 카드로 70B급 모델을 올리기 어렵습니다.</li>
+<li><strong>Apple Silicon(M 시리즈)</strong>: CPU와 GPU가 물리 메모리를 함께 쓰는 <a href="#term-unified-memory">통합 메모리</a>(Unified Memory Architecture: 통합 메모리 아키텍처) 구조입니다. 64GB나 128GB 메모리를 장착한 Mac에서는 별도의 고가 기업용 GPU 없이 70B 모델을 통째로 올려 구동할 수 있습니다. 초당 800GB 수준의 메모리 대역폭(M2 Ultra 기준)을 제공해 추론 속도도 안정적입니다.</li>
+</ul>
+<h2 id="양자화와-모델-파일-포맷">양자화와 모델 파일 포맷</h2>
+<p>제한된 메모리에서 대형 모델을 실행하려면 <a href="#term-quantization">양자화</a>(Quantization: 모델 가중치 정밀도 축소) 기술이 필요합니다.</p>
+<p>양자화는 16비트 부동소수점 가중치를 8비트나 4비트 정수(INT8, INT4) 형태로 압축하는 기법입니다. 정밀도를 낮추면 모델의 언어 표현력이 미세하게 떨어지지만, 메모리 사용량을 4분의 1 수준으로 줄여 토큰 생성 속도를 높입니다. 8B 모델을 4비트로 양자화하면 가중치 용량이 약 5GB 안팎으로 줄어들어 일반 노트북에서도 충분히 구동할 수 있습니다.</p>
+<p>주로 쓰이는 모델 파일 포맷은 다음과 같습니다.</p>
+<ul>
+<li><strong><a href="#term-gguf">GGUF</a>(GPT-Generated Unified Format: 양자화 모델 저장 포맷)</strong>: llama.cpp 프로젝트의 표준 바이너리 형식입니다. 모델 아키텍처 정보, 토크나이저 설정, 양자화 가중치를 단일 파일로 묶습니다. GPU VRAM이 부족할 때 일부 레이어만 시스템 RAM에 올리는 분할 적재(Offloading)를 지원해 일반 PC와 Mac 환경에서 널리 쓰입니다.</li>
+<li><strong><a href="#term-awq">AWQ</a>(Activation-aware Weight Quantization: 활성화 인식 가중치 양자화)</strong>: 추론 과정에서 중요한 역할을 하는 핵심 가중치를 보호하며 4비트로 압축하는 기법입니다. 추론 정확도 손실이 적고 NVIDIA GPU의 텐서 코어에 최적화되어 서버 환경 서빙에 주로 쓰입니다.</li>
+<li><strong><a href="#term-exl2">EXL2</a>(ExLlamaV2 format: ExLlamaV2 전용 가중치 포맷)</strong>: 소수점 단위의 가변 비트레이트 양자화를 지원합니다. NVIDIA GPU 환경에 최적화되어 단일 그래픽 카드에서 빠른 토큰 생성 속도를 냅니다.</li>
+</ul>
+<h2 id="로컬-추론-엔진과-서빙-런타임">로컬 추론 엔진과 서빙 런타임</h2>
+<p>모델 파일을 내려받은 뒤에는 가중치를 메모리에 올리고 연산을 스케줄링하며 외부 요청을 받아 응답을 넘겨주는 추론 엔진이 필요합니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>사용자 코드 (Python / LangChain)
+</span></span><span style="display:flex;"><span>  → HTTP POST /v1/chat/completions
+</span></span><span style="display:flex;"><span>  → 추론 엔진 (Ollama / vLLM / llama.cpp)
+</span></span><span style="display:flex;"><span>  → 하드웨어 가속기 (CUDA / Metal / CPU)
+</span></span></code></pre></div><p>프로젝트 규모와 배포 환경에 따라 도구를 선택합니다.</p>
+<ul>
+<li><strong>Ollama</strong>: 개인 개발 환경 구축에 가장 적합한 도구입니다. 단일 바이너리로 설치되며 모델 다운로드와 실행을 명령어 한 줄로 처리합니다. 백그라운드 서비스로 상주하며 OpenAI 호환 API를 기본 포트(11434)로 제공합니다.</li>
+<li><strong>llama.cpp</strong>: 순수 C/C++로 구현된 고성능 추론 엔진입니다. 외부 런타임 의존성이 없으며 Apple Metal, NVIDIA CUDA, CPU 등 대부분의 하드웨어를 지원합니다. 정밀한 메모리 제어와 커스텀 빌드가 필요할 때 씁니다.</li>
+<li><strong><a href="#term-vllm">vLLM</a>(vLLM: 고성능 분산 LLM 서빙 프레임워크)</strong>: 대규모 동시 요청 처리에 특화된 서빙 프레임워크입니다. PagedAttention 기술을 적용해 여러 사용자가 동시에 요청할 때 생기는 KV 캐시 메모리 낭비를 줄이고 GPU 처리량을 극대화합니다. 팀 단위 개발 서버나 사내 API 서빙에 알맞습니다.</li>
+</ul>
+<figure>
+    <img loading="lazy" src="local-llm-architecture.svg"
+         alt="로컬 LLM 구동 계층 아키텍처"/> <figcaption>
+            <p>그림 1. 로컬 LLM 구동 계층 아키텍처 (직접 제작)</p>
+        </figcaption>
+</figure>
+
+<h2 id="로컬-llm과-애플리케이션-연동-개발">로컬 LLM과 애플리케이션 연동 개발</h2>
+<p>로컬 엔진은 공통적으로 <a href="#term-rest-api">REST API</a>(Representational State Transfer API: 웹 표준 인터페이스) 엔드포인트를 제공합니다. 특히 OpenAI의 표준 엔드포인트 규격(<code>/v1/chat/completions</code>)을 지원하므로, 기존 SDK 코드의 접속 주소(<code>base_url</code>)만 바꾸면 로컬 모델로 전환할 수 있습니다.</p>
+<h3 id="ollama를-이용한-로컬-서버-실행">Ollama를 이용한 로컬 서버 실행</h3>
+<p>터미널에서 모델을 내려받고 실행합니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic"># Llama 3.1 8B 양자화 모델 다운로드 및 실행</span>
+</span></span><span style="display:flex;"><span>ollama run llama3.1:8b
+</span></span></code></pre></div><p>실행과 동시에 11434 포트로 HTTP 서버가 열립니다. <code>curl</code> 명령으로 동작을 확인합니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl http://localhost:11434/v1/chat/completions <span style="color:#79c0ff">\
+</span></span></span><span style="display:flex;"><span>  -H <span style="color:#a5d6ff">&#34;Content-Type: application/json&#34;</span> <span style="color:#79c0ff">\
+</span></span></span><span style="display:flex;"><span>  -d <span style="color:#a5d6ff">&#39;{
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">    &#34;model&#34;: &#34;llama3.1:8b&#34;,
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">    &#34;messages&#34;: [
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">      {&#34;role&#34;: &#34;user&#34;, &#34;content&#34;: &#34;로컬 LLM 구동 시 VRAM이 중요한 이유를 1문장으로 요약해줘.&#34;}
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">    ],
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">    &#34;temperature&#34;: 0.2
+</span></span></span><span style="display:flex;"><span><span style="color:#a5d6ff">  }&#39;</span>
+</span></span></code></pre></div><h3 id="python-코드-연동">Python 코드 연동</h3>
+<p>Python 애플리케이션에서는 공식 <code>openai</code> 라이브러리를 사용하되 <code>base_url</code>을 로컬 서버로 지정합니다. 로컬 환경은 API 키 검증을 하지 않으므로 임의의 문자열을 넣습니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#ff7b72">from</span> <span style="color:#ff7b72">openai</span> <span style="color:#ff7b72">import</span> OpenAI
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>client <span style="color:#ff7b72;font-weight:bold">=</span> OpenAI(
+</span></span><span style="display:flex;"><span>    base_url<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;http://localhost:11434/v1&#34;</span>,
+</span></span><span style="display:flex;"><span>    api_key<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;ollama&#34;</span>,
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>response <span style="color:#ff7b72;font-weight:bold">=</span> client<span style="color:#ff7b72;font-weight:bold">.</span>chat<span style="color:#ff7b72;font-weight:bold">.</span>completions<span style="color:#ff7b72;font-weight:bold">.</span>create(
+</span></span><span style="display:flex;"><span>    model<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">&#34;llama3.1:8b&#34;</span>,
+</span></span><span style="display:flex;"><span>    messages<span style="color:#ff7b72;font-weight:bold">=</span>[
+</span></span><span style="display:flex;"><span>        {<span style="color:#a5d6ff">&#34;role&#34;</span>: <span style="color:#a5d6ff">&#34;system&#34;</span>, <span style="color:#a5d6ff">&#34;content&#34;</span>: <span style="color:#a5d6ff">&#34;간결하고 정확하게 답변하세요.&#34;</span>},
+</span></span><span style="display:flex;"><span>        {<span style="color:#a5d6ff">&#34;role&#34;</span>: <span style="color:#a5d6ff">&#34;user&#34;</span>, <span style="color:#a5d6ff">&#34;content&#34;</span>: <span style="color:#a5d6ff">&#34;GGUF 포맷의 장점이 무엇인가요?&#34;</span>},
+</span></span><span style="display:flex;"><span>    ],
+</span></span><span style="display:flex;"><span>    temperature<span style="color:#ff7b72;font-weight:bold">=</span><span style="color:#a5d6ff">0.3</span>,
+</span></span><span style="display:flex;"><span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(response<span style="color:#ff7b72;font-weight:bold">.</span>choices[<span style="color:#a5d6ff">0</span>]<span style="color:#ff7b72;font-weight:bold">.</span>message<span style="color:#ff7b72;font-weight:bold">.</span>content)
+</span></span></code></pre></div><p>이 연동 구조를 쓰면 로컬 환경에서 프로토타입을 테스트하고 로직을 검증한 뒤, 고성능 모델이 필요할 때만 접속 주소를 클라우드 API로 바꿀 수 있습니다.</p>
+<p>사내 문서를 기반으로 답변하는 <a href="#term-rag">RAG</a>(Retrieval-Augmented Generation: 검색 증강 생성) 시스템을 개발할 때도 로컬 LLM과 임베딩 모델(예: BAAI의 bge-m3)을 벡터 데이터베이스와 결합하면, 데이터가 외부로 유출되지 않는 완전한 폐쇄망 질의응답 시스템을 구축할 수 있습니다.</p>
+<h2 id="참고-자료">참고 자료</h2>
+<ul>
+<li><a href="https://github.com/meta-llama/llama3">Llama 3 Model Architecture</a>, Meta AI, 2026-11-01 확인</li>
+<li><a href="https://github.com/ggerganov/ggml/blob/master/docs/gguf.md">GGUF Specification</a>, Georgi Gerganov, 2026-11-01 확인</li>
+<li><a href="https://arxiv.org/abs/2306.00978">AWQ: Activation-aware Weight Quantization</a>, MIT HAN Lab, 2026-11-01 확인</li>
+<li><a href="https://arxiv.org/abs/2309.06180">vLLM: Easy, Fast, and Cheap LLM Serving with PagedAttention</a>, UC Berkeley, 2026-11-01 확인</li>
+<li><a href="https://github.com/ollama/ollama">Ollama Documentation</a>, Ollama, 2026-11-01 확인</li>
+</ul>
+<h2 id="용어-설명">용어 설명</h2>
+<h3 id="term-llm">LLM</h3>
+<p>Large Language Model(대규모 언어 모델). 수십억 개 이상의 매개변수를 방대한 텍스트 데이터로 학습시켜 인간의 언어를 이해하고 생성하는 인공신경망 모델입니다. (<a href="https://llama.meta.com/">Meta Llama</a>)</p>
+<h3 id="term-gpu">GPU</h3>
+<p>Graphics Processing Unit(그래픽 처리 장치). 수천 개의 연산 코어를 이용해 대규모 행렬 연산을 병렬로 처리하는 하드웨어 가속기입니다. (<a href="https://developer.nvidia.com/">NVIDIA Developer</a>)</p>
+<h3 id="term-vram">VRAM</h3>
+<p>Video Random Access Memory(비디오 램). 그래픽 카드에 장착되어 GPU 코어가 초고속으로 접근할 수 있는 전용 고대역폭 메모리입니다.</p>
+<h3 id="term-fp16">FP16</h3>
+<p>16-bit Floating Point(16비트 반정밀도 부동소수점). 1개의 부동소수점 숫자를 16비트(2바이트)로 표현하는 데이터 형식입니다.</p>
+<h3 id="term-kv-cache">KV 캐시</h3>
+<p>Key-Value Cache(키-값 캐시). 트랜스포머 모델이 이전 토큰들을 매번 재연산하지 않도록 중간 어텐션 연산 결과(Key, Value)를 메모리에 저장해 두는 버퍼입니다.</p>
+<h3 id="term-cuda">CUDA</h3>
+<p>Compute Unified Device Architecture(쿠다). NVIDIA가 개발한 GPU 범용 병렬 컴퓨팅 플랫폼 및 프로그래밍 모델입니다. (<a href="https://developer.nvidia.com/cuda-zone">NVIDIA CUDA</a>)</p>
+<h3 id="term-unified-memory">통합 메모리</h3>
+<p>Unified Memory Architecture(통합 메모리 아키텍처). CPU와 GPU가 데이터를 복사하지 않고 단일 고대역폭 메모리 주소 공간을 함께 사용하는 구조입니다. (<a href="https://developer.apple.com/">Apple Developer</a>)</p>
+<h3 id="term-quantization">양자화</h3>
+<p>Quantization(모델 가중치 정밀도 축소). 모델의 매개변수를 16비트 부동소수점에서 8비트나 4비트 정수로 변환하여 메모리 사용량을 줄이고 추론 속도를 높이는 기법입니다.</p>
+<h3 id="term-gguf">GGUF</h3>
+<p>GPT-Generated Unified Format(양자화 모델 저장 포맷). llama.cpp 생태계에서 모델 아키텍처 정보와 가중치를 단일 바이너리 파일로 관리하기 위해 고안한 표준 포맷입니다. (<a href="https://github.com/ggerganov/ggml/blob/master/docs/gguf.md">GGUF Document</a>)</p>
+<h3 id="term-awq">AWQ</h3>
+<p>Activation-aware Weight Quantization(활성화 인식 가중치 양자화). 추론 시 활성화 값의 크기를 바탕으로 핵심 가중치를 보호하며 4비트로 압축하는 양자화 기술입니다. (<a href="https://github.com/mit-han-lab/llm-awq">AWQ GitHub</a>)</p>
+<h3 id="term-exl2">EXL2</h3>
+<p>ExLlamaV2 format(ExLlamaV2 전용 가중치 포맷). NVIDIA GPU 환경에서 극도로 빠른 추론 속도를 내도록 설계된 가변 비트레이트 양자화 포맷입니다. (<a href="https://github.com/turboderp/exllamav2">ExLlamaV2</a>)</p>
+<h3 id="term-vllm">vLLM</h3>
+<p>Virtual Large Language Model 서빙 프레임워크. PagedAttention 알고리즘을 사용해 KV 캐시 메모리 낭비를 줄이고 동시 요청 처리량을 극대화한 오픈소스 분산 서빙 엔진입니다. (<a href="https://docs.vllm.ai/">vLLM Documentation</a>)</p>
+<h3 id="term-rest-api">REST API</h3>
+<p>Representational State Transfer API(웹 표준 인터페이스). HTTP 프로토콜을 사용해 자원을 주고받는 웹 애플리케이션 아키텍처 스타일입니다.</p>
+<h3 id="term-rag">RAG</h3>
+<p>Retrieval-Augmented Generation(검색 증강 생성). 질문과 관련된 외부 문서 데이터를 검색해 프롬프트 문맥에 주입한 뒤 언어 모델이 답변하도록 만드는 기술입니다.</p>
+]]></content:encoded></item></channel></rss>

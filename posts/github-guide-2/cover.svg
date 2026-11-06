@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="cover-title cover-desc">
+  <title id="cover-title">GitHub 활용하기 2편 cover</title>
+  <desc id="cover-desc">밝은 베이지 배경 왼쪽에 제목 GitHub 활용하기와 2편 배지, 오른쪽에 이슈, 풀 리퀘스트, 검사 통과 카드가 겹쳐 쌓인 그림</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7f2e8" />
+      <stop offset="1" stop-color="#e6eefb" />
+    </linearGradient>
+    <pattern id="dots" width="32" height="32" patternUnits="userSpaceOnUse">
+      <circle cx="4" cy="4" r="2" fill="#1e293b" fill-opacity="0.08" />
+    </pattern>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#1e293b" flood-opacity="0.22" />
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect width="1200" height="630" fill="url(#dots)" />
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <rect x="72" y="84" width="216" height="44" rx="22" fill="#1e293b" />
+    <text x="180" y="113" font-size="22" font-weight="600" fill="#f8fafc" text-anchor="middle">GitHub · 자동화</text>
+    <rect x="304" y="84" width="72" height="44" rx="22" fill="#ea580c" />
+    <text x="340" y="113" font-size="22" font-weight="700" fill="#ffffff" text-anchor="middle">2편</text>
+    <text x="72" y="232" font-size="72" font-weight="800" fill="#0f172a">GitHub</text>
+    <text x="72" y="310" font-size="60" font-weight="800" fill="#0f172a">활용하기</text>
+    <rect x="72" y="346" width="96" height="6" rx="3" fill="#ea580c" />
+    <text x="72" y="410" font-size="28" font-weight="500" fill="#334155">Actions · Pages · 릴리스</text>
+    <text x="72" y="566" font-size="22" font-weight="600" fill="#475569">휘발성 메모리 백업소</text>
+    <text x="294" y="566" font-size="22" font-weight="400" fill="#475569">dev.route50.kr</text>
+  </g>
+  <g filter="url(#shadow)">
+    <g transform="translate(700 90)">
+      <rect width="400" height="130" rx="20" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" />
+      <circle cx="52" cy="65" r="18" fill="none" stroke="#16a34a" stroke-width="6" />
+      <circle cx="52" cy="65" r="5" fill="#16a34a" />
+      <rect x="92" y="44" width="240" height="14" rx="7" fill="#334155" />
+      <rect x="92" y="72" width="160" height="12" rx="6" fill="#94a3b8" />
+      <rect x="92" y="96" width="60" height="16" rx="8" fill="#fed7aa" />
+    </g>
+    <g transform="translate(760 250)">
+      <rect width="400" height="130" rx="20" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" />
+      <circle cx="44" cy="84" r="9" fill="#7c3aed" />
+      <circle cx="44" cy="40" r="9" fill="#7c3aed" />
+      <path d="M44 49 V75" stroke="#7c3aed" stroke-width="4" />
+      <path d="M76 84 H110 V70" fill="none" stroke="#7c3aed" stroke-width="4" />
+      <circle cx="110" cy="52" r="9" fill="none" stroke="#7c3aed" stroke-width="4" />
+      <rect x="140" y="38" width="210" height="14" rx="7" fill="#334155" />
+      <rect x="140" y="66" width="150" height="12" rx="6" fill="#94a3b8" />
+      <rect x="140" y="92" width="76" height="16" rx="8" fill="#ddd6fe" />
+    </g>
+    <g transform="translate(700 410)">
+      <rect width="400" height="110" rx="20" fill="#0f172a" />
+      <circle cx="56" cy="55" r="22" fill="#22c55e" />
+      <path d="M45 55 L53 64 L68 46" fill="none" stroke="#0f172a" stroke-width="6" stroke-linejoin="miter" />
+      <rect x="100" y="38" width="220" height="14" rx="7" fill="#e2e8f0" />
+      <rect x="100" y="64" width="140" height="12" rx="6" fill="#64748b" />
+    </g>
+  </g>
+</svg>

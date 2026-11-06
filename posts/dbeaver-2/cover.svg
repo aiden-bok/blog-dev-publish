@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="cover-title cover-desc">
+  <title id="cover-title">DBeaver 설치와 사용 cover</title>
+  <desc id="cover-desc">짙은 청록색 배경 왼쪽에 제목 DBeaver 설치와 사용, 오른쪽에 SELECT 문이 적힌 SQL 편집기 창과 결과 표</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#042f2e" />
+      <stop offset="1" stop-color="#115e59" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0.8" cy="0.3" r="0.6">
+      <stop offset="0" stop-color="#5eead4" stop-opacity="0.26" />
+      <stop offset="1" stop-color="#5eead4" stop-opacity="0" />
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0 H0 V40" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1.5" />
+    </pattern>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="220%">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#021a19" flood-opacity="0.6" />
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect width="1200" height="630" fill="url(#grid)" />
+  <rect width="1200" height="630" fill="url(#glow)" />
+
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <rect x="72" y="84" width="196" height="44" rx="22" fill="#5eead4" fill-opacity="0.14" stroke="#5eead4" stroke-opacity="0.6" />
+    <text x="170" y="113" font-size="20" font-weight="600" fill="#99f6e4" text-anchor="middle">DBeaver · SQL</text>
+    <rect x="284" y="84" width="72" height="44" rx="22" fill="#f59e0b" />
+    <text x="320" y="113" font-size="20" font-weight="700" fill="#1c1917" text-anchor="middle">2편</text>
+    <text x="72" y="232" font-size="64" font-weight="800" fill="#f0fdfa">DBeaver 설치</text>
+    <text x="72" y="304" font-size="44" font-weight="700" fill="#99f6e4">연결부터 SQL 실행까지</text>
+    <rect x="72" y="344" width="96" height="6" rx="3" fill="#f59e0b" />
+    <text x="72" y="404" font-size="26" font-weight="500" fill="#99f6e4">Windows · macOS · Linux</text>
+    <text x="72" y="566" font-size="22" font-weight="600" fill="#5eead4">휘발성 메모리 백업소</text>
+    <text x="294" y="566" font-size="22" font-weight="400" fill="#2dd4bf">dev.route50.kr</text>
+  </g>
+
+  <!-- 편집기 창 -->
+  <g transform="translate(700 100)" filter="url(#shadow)">
+    <rect width="440" height="260" rx="20" fill="#0b1220" stroke="#334155" stroke-width="2" />
+    <rect width="440" height="52" rx="20" fill="#111a2e" />
+    <rect y="32" width="440" height="20" fill="#111a2e" />
+    <circle cx="30" cy="26" r="7" fill="#f87171" />
+    <circle cx="54" cy="26" r="7" fill="#fbbf24" />
+    <circle cx="78" cy="26" r="7" fill="#34d399" />
+    <text x="220" y="33" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="17" fill="#94a3b8" text-anchor="middle">Script.sql</text>
+    <g font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="22">
+      <text x="30" y="108"><tspan fill="#c084fc">SELECT</tspan><tspan fill="#f8fafc"> name, total</tspan></text>
+      <text x="30" y="148"><tspan fill="#c084fc">FROM</tspan><tspan fill="#7dd3fc"> orders</tspan></text>
+      <text x="30" y="188"><tspan fill="#c084fc">ORDER BY</tspan><tspan fill="#fbbf24"> total</tspan><tspan fill="#c084fc"> DESC</tspan><tspan fill="#f8fafc">;</tspan></text>
+    </g>
+    <rect x="30" y="214" width="150" height="8" rx="4" fill="#34d399" fill-opacity="0.5" />
+  </g>
+
+  <!-- 결과 표 -->
+  <g transform="translate(760 330)" filter="url(#shadow)">
+    <rect width="380" height="210" rx="16" fill="#f0fdfa" />
+    <path d="M0 16 a16 16 0 0 1 16 -16 h348 a16 16 0 0 1 16 16 v36 h-380 z" fill="#0d9488" />
+    <text x="30" y="36" font-family="Pretendard, 'Noto Sans KR', sans-serif" font-size="22" font-weight="700" fill="#f0fdfa">name</text>
+    <text x="230" y="36" font-family="Pretendard, 'Noto Sans KR', sans-serif" font-size="22" font-weight="700" fill="#f0fdfa">total</text>
+    <g font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="22" fill="#134e4a">
+      <text x="30" y="90">lee</text><text x="230" y="90">30000</text>
+      <text x="30" y="136">kim</text><text x="230" y="136">20000</text>
+      <text x="30" y="182">park</text><text x="230" y="182">0</text>
+    </g>
+    <g stroke="#99f6e4" stroke-width="2">
+      <line x1="0" y1="106" x2="380" y2="106" />
+      <line x1="0" y1="152" x2="380" y2="152" />
+    </g>
+  </g>
+</svg>

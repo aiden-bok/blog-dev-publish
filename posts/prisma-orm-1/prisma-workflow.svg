@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" role="img" aria-labelledby="wf-title wf-desc">
+  <title id="wf-title">schema.prisma 하나에서 갈라지는 두 갈래</title>
+  <desc id="wf-desc">schema.prisma 하나에서 migrate dev로 마이그레이션 SQL을 만들어 데이터베이스에 적용하고, generate로 타입이 있는 Prisma Client를 만들어 앱 코드에서 쓰는 구조</desc>
+  <defs>
+    <filter id="card-shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.12" />
+    </filter>
+    <marker id="arrow" viewBox="0 0 14 14" refX="12" refY="7" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M7 2 L12 7 L7 12" fill="none" stroke="#475569" stroke-width="2.5" stroke-linejoin="miter" stroke-linecap="butt" />
+    </marker>
+  </defs>
+  <rect width="1200" height="560" rx="24" fill="#f8fafc" />
+  <rect x="1" y="1" width="1198" height="558" rx="24" fill="none" stroke="#e2e8f0" stroke-width="2" />
+
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <text x="64" y="84" font-size="34" font-weight="800" fill="#0f172a">schema.prisma 하나에서 갈라지는 두 갈래</text>
+    <text x="64" y="124" font-size="24" font-weight="500" fill="#64748b">데이터베이스 쪽과 코드 쪽이 같은 파일을 기준으로 맞춰집니다</text>
+
+    <g filter="url(#card-shadow)">
+      <rect x="64" y="216" width="272" height="240" rx="18" fill="#ffffff" stroke="#99f6e4" stroke-width="3" />
+      <rect x="520" y="168" width="296" height="136" rx="18" fill="#ffffff" stroke="#fde68a" stroke-width="2" />
+      <rect x="520" y="368" width="296" height="136" rx="18" fill="#ffffff" stroke="#c7d2fe" stroke-width="2" />
+      <rect x="936" y="168" width="200" height="136" rx="18" fill="#ffffff" stroke="#fde68a" stroke-width="2" />
+      <rect x="936" y="368" width="200" height="136" rx="18" fill="#ffffff" stroke="#c7d2fe" stroke-width="2" />
+    </g>
+
+    <text x="88" y="276" font-size="28" font-weight="800" fill="#134e4a">스키마 파일</text>
+    <g font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="22" fill="#0f766e">
+      <text x="88" y="326">model User {</text>
+      <text x="112" y="362">id    Int</text>
+      <text x="112" y="398">email String</text>
+      <text x="88" y="434">}</text>
+    </g>
+
+    <text x="544" y="228" font-size="28" font-weight="700" fill="#78350f">마이그레이션 SQL</text>
+    <text x="544" y="270" font-size="22" fill="#92400e">prisma/migrations</text>
+    <text x="544" y="428" font-size="28" font-weight="700" fill="#1e1b4b">Prisma Client</text>
+    <text x="544" y="470" font-size="22" fill="#4338ca">스키마에서 생성한 타입</text>
+    <text x="960" y="236" font-size="28" font-weight="700" fill="#78350f">데이터베이스</text>
+    <text x="960" y="278" font-size="22" fill="#92400e">테이블 반영</text>
+    <text x="960" y="436" font-size="28" font-weight="700" fill="#1e1b4b">앱 코드</text>
+    <text x="960" y="478" font-size="22" fill="#4338ca">타입 검사</text>
+
+    <g stroke="#475569" stroke-width="2.5" stroke-linecap="butt" fill="none" marker-end="url(#arrow)">
+      <line x1="344" y1="300" x2="512" y2="236" />
+      <line x1="344" y1="372" x2="512" y2="436" />
+      <line x1="824" y1="236" x2="928" y2="236" />
+      <line x1="824" y1="436" x2="928" y2="436" />
+    </g>
+
+    <g font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="22" font-weight="700">
+      <text x="400" y="244" fill="#b45309" text-anchor="middle" transform="rotate(-21 400 244)">migrate dev</text>
+      <text x="400" y="440" fill="#4338ca" text-anchor="middle" transform="rotate(21 400 440)">generate</text>
+    </g>
+  </g>
+</svg>

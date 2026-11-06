@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>컨텍스트 on 휘발성 메모리 백업소</title><link>https://dev.route50.kr/tags/%EC%BB%A8%ED%85%8D%EC%8A%A4%ED%8A%B8/</link><description>Recent content in 컨텍스트 on 휘발성 메모리 백업소</description><image><title>휘발성 메모리 백업소</title><url>https://dev.route50.kr/about/cover.jpg</url><link>https://dev.route50.kr/about/cover.jpg</link></image><generator>Hugo</generator><language>ko-kr</language><lastBuildDate>Mon, 02 Nov 2026 00:10:40 +0900</lastBuildDate><atom:link href="https://dev.route50.kr/tags/%EC%BB%A8%ED%85%8D%EC%8A%A4%ED%8A%B8/index.xml" rel="self" type="application/rss+xml"/><item><title>2. 모노레포와 AI 코딩 도구: 컨텍스트 범위 정하기</title><link>https://dev.route50.kr/posts/monorepo-2/</link><pubDate>Mon, 02 Nov 2026 00:00:00 +0900</pubDate><guid>https://dev.route50.kr/posts/monorepo-2/</guid><description>AI 코딩 도구가 서버와 웹, 공용 코드를 한 번에 다루게 하는 모노레포 구성과, AGENTS.md와 시작 위치로 읽는 범위를 좁히는 방법을 정리했습니다.</description><content:encoded><![CDATA[<p><a href="#term-monorepo">모노레포</a>(Monorepo: 하나의 저장소)는 AI 코딩 도구가 서버, 웹, 공용 코드를 한 번에 보고 같은 변경 안에서 함께 고치게 해 주므로, 여러 앱에 걸친 작업에서 유리합니다. 다만 저장소가 커질수록 작업과 상관없는 파일과 지침이 도구의 <a href="#term-context-window">컨텍스트 윈도우</a>(Context window: AI가 한 번에 참고할 수 있는 입력 범위)를 채우기 때문에, 폴더별 지침 파일과 시작 위치로 읽는 범위를 좁혀야 합니다.</p>
+<p>저장소 구성과 워크스페이스 설정은 <a href="https://dev.route50.kr/posts/monorepo-1/">1. 모노레포란 무엇인가</a>에서 정리했습니다. 이 글은 그 구성 위에서 AI 도구를 어떻게 쓰는지를 다룹니다. 도구 동작은 Claude Code 공식 문서(2026-11-02 확인)를 기준으로 썼고, 직접 실행해 확인한 것은 아닙니다. 다른 도구는 지침 파일을 읽는 규칙이 다를 수 있습니다.</p>
+<h2 id="ai-도구에-모노레포가-유리한-이유">AI 도구에 모노레포가 유리한 이유</h2>
+<p>서버의 응답 형식을 바꾸면 웹의 호출 코드와 공용 타입도 함께 바뀌어야 합니다. 저장소가 나뉘어 있으면 AI 도구는 한 저장소만 열고 있으므로 다른 쪽 코드를 볼 수 없고, 사람이 다른 저장소의 내용을 붙여 넣어야 합니다. 한 저장소에 모두 있으면 도구가 API 정의, 서버 구현, 웹 호출부를 직접 읽고 한 번에 수정할 수 있습니다.</p>
+<p>monorepo.tools는 모노레포의 장점으로 AI 에이전트가 더 나은 컨텍스트와 피드백 루프를 얻는다는 점을 꼽고, Nx 문서도 여러 프로젝트를 가로지르는 변경에서 모노레포가 AI 에이전트에게 특히 유용하다고 설명합니다. (<a href="https://monorepo.tools/">monorepo.tools</a>, <a href="https://nx.dev/docs/getting-started/intro">Nx</a>) 코드를 한곳에 모은 구조가 사람에게만 편한 것이 아니라 도구에게도 같은 이유로 편하다는 뜻입니다.</p>
+<p>여기에 1편의 <code>turbo run build --affected</code> 같은 명령을 지침에 적어 두면 도구가 변경한 뒤 바뀐 패키지만 검증하는 흐름도 만들 수 있습니다.</p>
+<h2 id="시작-위치가-읽는-범위를-정한다">시작 위치가 읽는 범위를 정한다</h2>
+<p>Claude Code는 시작한 폴더와 그 위쪽 폴더의 <code>CLAUDE.md</code>를 실행할 때 읽고, 아래쪽 폴더의 파일은 필요할 때 읽습니다. 저장소 루트에서 시작하면 루트의 파일만 읽고 모든 파일에 접근할 수 있으며, 하위 폴더에서 시작하면 그 폴더와 상위 폴더의 파일을 읽고 접근 범위도 그 폴더로 한정됩니다. (<a href="https://code.claude.com/docs/en/large-codebases">Set up Claude Code in a monorepo or large codebase</a>)</p>
+<table>
+	<thead>
+			<tr>
+					<th>시작 위치</th>
+					<th>접근 범위</th>
+					<th>실행할 때 읽는 지침</th>
+					<th>맞는 작업</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>저장소 루트</td>
+					<td>모든 파일</td>
+					<td>루트 파일만, 하위 폴더는 필요할 때</td>
+					<td>여러 패키지에 걸친 작업</td>
+			</tr>
+			<tr>
+					<td>하위 폴더</td>
+					<td>그 폴더 아래만</td>
+					<td>그 폴더와 상위 폴더의 파일</td>
+					<td>한 앱 안에서 끝나는 작업</td>
+			</tr>
+	</tbody>
+</table>
+<figure>
+    <img loading="lazy" src="context-scope.svg"
+         alt="루트 AGENTS.md 아래에 apps/server, apps/web, apps/android가 있고, apps/web에서 시작하면 루트와 apps/web의 지침만 읽히고 나머지는 읽히지 않는다는 그림"/> <figcaption>
+            <p>그림 1. apps/web에서 시작했을 때 읽는 지침 (직접 제작)</p>
+        </figcaption>
+</figure>
+
+<p>그래서 웹 화면만 고칠 때는 <code>apps/web</code>에서 시작하고, 서버 API와 웹을 함께 바꿀 때는 루트에서 시작하는 식으로 작업 단위에 맞춰 위치를 고릅니다.</p>
+<h2 id="루트와-폴더별-지침-파일-나누기">루트와 폴더별 지침 파일 나누기</h2>
+<p><a href="#term-agents-md">AGENTS.md</a>는 AI 코딩 도구에게 빌드 방법, 테스트 명령, 코딩 규칙을 알려 주는 Markdown 파일입니다. 모노레포에서는 패키지마다 따로 둘 수 있고, 충돌하면 편집하는 파일에 가장 가까운 것이 우선합니다. (<a href="https://agents.md/">AGENTS.md</a>) 루트에는 모든 앱에 공통인 규칙을, 각 앱 폴더에는 그 앱의 규칙만 적습니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-markdown" data-lang="markdown"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">&lt;!-- 루트 AGENTS.md --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 패키지 관리자는 pnpm만 씁니다.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 변경한 뒤에는 <span style="color:#a5d6ff">`pnpm turbo run test --affected`</span>로 검증합니다.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 커밋 제목 앞에 앱 이름을 붙입니다. (예: <span style="color:#a5d6ff">`web: 로그인 화면 수정`</span>)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-markdown" data-lang="markdown"><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">&lt;!-- apps/web/AGENTS.md --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 컴포넌트는 <span style="color:#a5d6ff">`src/components/`</span>에 두고, 서버 호출은 <span style="color:#a5d6ff">`packages/shared`</span>의 타입을 씁니다.
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">-</span> 스타일은 CSS 모듈만 씁니다.
+</span></span></code></pre></div><p>Claude Code는 <code>AGENTS.md</code>만 있고 <code>CLAUDE.md</code>가 없으면 <code>AGENTS.md</code>를 읽고, 둘 다 있으면 <code>CLAUDE.md</code>만 읽습니다. <code>AGENTS.md</code>를 직접 읽는 기능은 Claude Code v2.1.277 이상이 필요합니다. 두 도구를 함께 쓰려면 <code>CLAUDE.md</code> 안에서 <code>AGENTS.md</code>를 가져오게 하면 됩니다. (<a href="https://code.claude.com/docs/en/memory">How Claude remembers your project</a>)</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-markdown" data-lang="markdown"><span style="display:flex;"><span><span style="color:#ffa657">@AGENTS</span>.md
+</span></span></code></pre></div><h2 id="다른-폴더가-필요할-때-접근-범위-넓히기">다른 폴더가 필요할 때 접근 범위 넓히기</h2>
+<p><code>apps/server</code>에서 시작했는데 <code>packages/shared</code>의 타입도 고쳐야 한다면 그 폴더에 접근할 권한을 추가합니다. 실행할 때 <code>--add-dir</code>를 주거나 <code>.claude/settings.json</code>의 <code>additionalDirectories</code>에 적습니다. 문서에 따르면 같은 방법으로 별도로 내려받은 다른 저장소에도 접근할 수 있습니다. (<a href="https://code.claude.com/docs/en/large-codebases">Set up Claude Code in a monorepo or large codebase</a>)</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>claude --add-dir ../shared
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#7ee787">&#34;permissions&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#7ee787">&#34;additionalDirectories&#34;</span>: [<span style="color:#a5d6ff">&#34;../shared&#34;</span>, <span style="color:#a5d6ff">&#34;../web&#34;</span>]
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>additionalDirectories</code> 설정으로 추가한 폴더의 <code>CLAUDE.md</code>와 규칙은 읽히지 않고, <code>--add-dir</code>로 추가해도 환경 변수 <code>CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1</code>을 켜야 읽힙니다. 폴더에 접근할 수 있는 것과 그 폴더의 지침을 읽는 것은 다른 문제입니다.</p>
+<h2 id="불필요한-파일과-지침-줄이기">불필요한 파일과 지침 줄이기</h2>
+<p>다른 팀이나 옛 코드의 지침이 따라 읽히면 컨텍스트만 낭비됩니다. <code>claudeMdExcludes</code>는 경로 패턴에 맞는 <code>CLAUDE.md</code>를 읽지 않게 하고, <code>permissions.deny</code>의 <code>Read</code> 규칙은 빌드 결과나 외부 코드를 열지 못하게 막습니다. (<a href="https://code.claude.com/docs/en/large-codebases">Set up Claude Code in a monorepo or large codebase</a>)</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#7ee787">&#34;claudeMdExcludes&#34;</span>: [<span style="color:#a5d6ff">&#34;**/packages/legacy-*/**&#34;</span>],
+</span></span><span style="display:flex;"><span>  <span style="color:#7ee787">&#34;permissions&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#7ee787">&#34;deny&#34;</span>: [<span style="color:#a5d6ff">&#34;Read(./**/dist/**/*)&#34;</span>, <span style="color:#a5d6ff">&#34;Read(./**/vendor/**/*)&#34;</span>]
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>.gitignore</code>에 적힌 <code>node_modules/</code>나 <code>dist/</code>는 검색 결과에서 이미 빠지므로, 저장소에 커밋된 생성 코드와 외부 코드에 이 규칙을 씁니다.</p>
+<h2 id="여러-패키지에-걸친-변경은-계획부터">여러 패키지에 걸친 변경은 계획부터</h2>
+<p>공용 타입을 바꾸고 그것을 쓰는 모든 호출부를 고치는 작업은 한 세션에서 전체를 맡기는 편이 결정이 일관됩니다. 문서는 편집 전에 계획 모드로 계획을 세우라고 권하는데, 긴 작업에서는 컨텍스트가 압축되어도 계획 파일이 다시 주입되기 때문입니다. (<a href="https://code.claude.com/docs/en/large-codebases">Set up Claude Code in a monorepo or large codebase</a>)</p>
+<p>서버, 웹, 안드로이드, iOS를 모두 다루는 제품이라면 한 번에 네 앱을 모두 고치게 하기보다 API 명세를 먼저 바꾸고 앱별로 나눠 확인하는 쪽이 검토하기 쉽습니다. 이 순서는 문서의 내용이 아니라 변경을 <a href="#term-pr">PR</a>(Pull Request: 변경을 병합해 달라는 요청)로 검토하는 입장에서 정한 제 기준입니다.</p>
+<h2 id="모노레포가-아니어도-ai-도구는-쓸-수-있다">모노레포가 아니어도 AI 도구는 쓸 수 있다</h2>
+<p>저장소가 나뉘어 있어도 <code>--add-dir</code>로 다른 저장소를 함께 열 수 있으므로 모노레포가 AI 도구의 필수 조건은 아닙니다. 모노레포의 이점은 접근 권한보다 변경이 하나의 커밋과 PR로 묶이고, 도구가 검증 명령까지 한곳에서 돌릴 수 있다는 점에 있습니다. 저장소를 합치는 비용(CI 설정, 권한 분리, 이력 이전)이 그 이점보다 크다면 나눠 둔 채로 쓰는 것도 맞는 선택입니다.</p>
+<h2 id="참고-자료">참고 자료</h2>
+<ul>
+<li><a href="https://monorepo.tools/">Monorepo Tools</a>, monorepo.tools, 2026-11-02 확인</li>
+<li><a href="https://nx.dev/docs/getting-started/intro">Intro to Nx</a>, Nx Docs, 2026-11-02 확인</li>
+<li><a href="https://agents.md/">AGENTS.md</a>, agents.md, 2026-11-02 확인</li>
+<li><a href="https://code.claude.com/docs/en/memory">How Claude remembers your project</a>, Claude Code Docs, 2026-11-02 확인</li>
+<li><a href="https://code.claude.com/docs/en/large-codebases">Set up Claude Code in a monorepo or large codebase</a>, Claude Code Docs, 2026-11-02 확인</li>
+</ul>
+<h2 id="용어-설명">용어 설명</h2>
+<h3 id="term-monorepo">모노레포</h3>
+<p>Monorepo. 관계가 분명한 여러 프로젝트를 하나의 저장소에서 관리하는 방식입니다. (<a href="https://monorepo.tools/">monorepo.tools</a>)</p>
+<h3 id="term-context-window">컨텍스트 윈도우</h3>
+<p>Context window. AI 모델이 한 번의 대화에서 참고할 수 있는 입력의 범위입니다. 지침과 읽은 파일이 이 범위를 차지합니다. (<a href="https://code.claude.com/docs/en/context-window">Claude Code Docs</a>)</p>
+<h3 id="term-agents-md">AGENTS.md</h3>
+<p>AI 코딩 도구용 지침을 적는 Markdown 형식입니다. 사람이 읽는 README와 달리 빌드 방법, 테스트, 규칙을 도구에게 알려 줍니다. (<a href="https://agents.md/">agents.md</a>)</p>
+<h3 id="term-pr">PR</h3>
+<p>Pull Request. 작업 브랜치의 변경을 다른 브랜치에 합쳐 달라고 요청하고 검토하는 GitHub의 기능입니다. (<a href="https://docs.github.com/en/pull-requests">GitHub Docs</a>)</p>
+]]></content:encoded></item></channel></rss>

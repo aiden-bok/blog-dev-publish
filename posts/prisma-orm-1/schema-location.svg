@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" role="img" aria-labelledby="sl-title sl-desc">
+  <title id="sl-title">스키마와 쿼리를 쓰는 방식 비교</title>
+  <desc id="sl-desc">SQL 직접 작성, Drizzle, TypeORM, Prisma가 스키마를 어디에 정의하고 쿼리를 어떤 모양으로 쓰는지 비교한 그림</desc>
+  <defs>
+    <filter id="card-shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.12" />
+    </filter>
+  </defs>
+  <rect width="1200" height="600" rx="24" fill="#f8fafc" />
+  <rect x="1" y="1" width="1198" height="598" rx="24" fill="none" stroke="#e2e8f0" stroke-width="2" />
+
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <text x="64" y="84" font-size="34" font-weight="800" fill="#0f172a">스키마와 쿼리를 쓰는 방식</text>
+    <text x="64" y="124" font-size="24" font-weight="500" fill="#64748b">같은 데이터베이스를 다루어도 출발점이 서로 다릅니다</text>
+
+    <g filter="url(#card-shadow)">
+      <rect x="64" y="160" width="244" height="72" rx="16" fill="#334155" />
+      <rect x="340" y="160" width="244" height="72" rx="16" fill="#0369a1" />
+      <rect x="616" y="160" width="244" height="72" rx="16" fill="#b45309" />
+      <rect x="892" y="160" width="244" height="72" rx="16" fill="#0f766e" />
+    </g>
+    <g font-size="28" font-weight="800" fill="#ffffff" text-anchor="middle">
+      <text x="186" y="207">SQL 직접</text>
+      <text x="462" y="207">Drizzle</text>
+      <text x="738" y="207">TypeORM</text>
+      <text x="1014" y="207">Prisma</text>
+    </g>
+
+    <text x="64" y="264" font-size="22" font-weight="700" fill="#475569">스키마 정의</text>
+    <g filter="url(#card-shadow)">
+      <rect x="64" y="276" width="244" height="124" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" />
+      <rect x="340" y="276" width="244" height="124" rx="16" fill="#ffffff" stroke="#bae6fd" stroke-width="2" />
+      <rect x="616" y="276" width="244" height="124" rx="16" fill="#ffffff" stroke="#fde68a" stroke-width="2" />
+      <rect x="892" y="276" width="244" height="124" rx="16" fill="#ffffff" stroke="#99f6e4" stroke-width="2" />
+    </g>
+    <g font-size="24" font-weight="700" fill="#0f172a" text-anchor="middle">
+      <text x="186" y="330">DDL 문장</text>
+      <text x="462" y="330">TypeScript 코드</text>
+      <text x="738" y="330">클래스</text>
+      <text x="1014" y="330">별도 스키마 파일</text>
+    </g>
+    <g font-size="22" font-weight="500" fill="#475569" text-anchor="middle">
+      <text x="186" y="366">CREATE TABLE</text>
+      <text x="462" y="366">테이블을 코드로 선언</text>
+      <text x="738" y="366">데코레이터로 표시</text>
+      <text x="1014" y="366">schema.prisma</text>
+    </g>
+
+    <text x="64" y="432" font-size="22" font-weight="700" fill="#475569">쿼리 모양</text>
+    <g filter="url(#card-shadow)">
+      <rect x="64" y="444" width="244" height="124" rx="16" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" />
+      <rect x="340" y="444" width="244" height="124" rx="16" fill="#ffffff" stroke="#bae6fd" stroke-width="2" />
+      <rect x="616" y="444" width="244" height="124" rx="16" fill="#ffffff" stroke="#fde68a" stroke-width="2" />
+      <rect x="892" y="444" width="244" height="124" rx="16" fill="#ffffff" stroke="#99f6e4" stroke-width="2" />
+    </g>
+    <g font-size="24" font-weight="700" fill="#0f172a" text-anchor="middle">
+      <text x="186" y="498">SQL 문자열</text>
+      <text x="462" y="498">SQL을 닮은 API</text>
+      <text x="738" y="498">QueryBuilder 등</text>
+      <text x="1014" y="498">객체 인자</text>
+    </g>
+    <g font-size="22" font-weight="500" fill="#475569" text-anchor="middle">
+      <text x="186" y="534">결과는 직접 매핑</text>
+      <text x="462" y="534">관계형 API도 제공</text>
+      <text x="738" y="534">패턴 2가지 지원</text>
+      <text x="1014" y="534">where, include</text>
+    </g>
+  </g>
+</svg>

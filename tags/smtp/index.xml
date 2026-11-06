@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>SMTP on 휘발성 메모리 백업소</title><link>https://dev.route50.kr/tags/smtp/</link><description>Recent content in SMTP on 휘발성 메모리 백업소</description><image><title>휘발성 메모리 백업소</title><url>https://dev.route50.kr/about/cover.jpg</url><link>https://dev.route50.kr/about/cover.jpg</link></image><generator>Hugo</generator><language>ko-kr</language><lastBuildDate>Thu, 05 Nov 2026 10:30:22 +0900</lastBuildDate><atom:link href="https://dev.route50.kr/tags/smtp/index.xml" rel="self" type="application/rss+xml"/><item><title>2. AWS SES SMTP와 SDK로 메일 발송하기</title><link>https://dev.route50.kr/posts/aws-ses-send-email-2/</link><pubDate>Thu, 05 Nov 2026 00:00:00 +0900</pubDate><guid>https://dev.route50.kr/posts/aws-ses-send-email-2/</guid><description>AWS SES로 메일을 보내는 두 방법인 SMTP 인터페이스와 API를 비교하고, SMTP 자격 증명 발급, Nodemailer 연동, AWS SDK for JavaScript v3의 SendEmailCommand 코드를 정리했습니다.</description><content:encoded><![CDATA[<p>SES로 메일을 보내는 방법은 <a href="#term-smtp">SMTP</a>(Simple Mail Transfer Protocol: 간이 메일 전송 규약) 인터페이스와 API 두 가지입니다. 기존 코드나 메일 라이브러리를 그대로 쓰고 싶으면 SMTP, 새로 만드는 서버 코드라면 AWS <a href="#term-sdk">SDK</a>(Software Development Kit: 소프트웨어 개발 키트)로 API를 호출하는 쪽이 설정이 단순합니다. 도메인 인증과 샌드박스 해제가 끝났다는 전제로 쓴 글이며, 앞 단계는 <a href="https://dev.route50.kr/posts/aws-ses-send-email-1/">1. AWS SES 도메인 인증, DKIM, SPF, 샌드박스 해제</a>에 있습니다.</p>
+<p>이 글의 코드는 Node.js 24에서 쓰도록 작성했습니다. 작성 환경에는 AWS 계정과 자격 증명이 없어서 실제로 발송해 보지 못했으므로, 실행 결과는 싣지 않았습니다. 도메인과 주소는 모두 <code>example.com</code> 같은 예시 값입니다.</p>
+<figure>
+    <img loading="lazy" src="send-paths.svg"
+         alt="애플리케이션이 SMTP 587 포트 또는 SDK의 HTTPS 호출로 SES에 도달하는 두 경로와 각 경로의 자격 증명 종류"/> <figcaption>
+            <p>그림 1. SES 발송 경로 두 가지 (직접 제작)</p>
+        </figcaption>
+</figure>
+
+<h2 id="smtp와-api-중-무엇을-고를까">SMTP와 API 중 무엇을 고를까</h2>
+<p>두 방법은 인증 정보가 서로 다릅니다. SMTP는 SES 전용 SMTP 사용자 이름과 비밀번호를 쓰고, 이 비밀번호는 AWS 비밀 액세스 키와 같지 않습니다. (<a href="https://docs.aws.amazon.com/ses/latest/dg/smtp-credentials.html">Obtaining Amazon SES SMTP credentials</a>) API는 SDK가 AWS 자격 증명으로 요청을 서명해 주고, 재시도와 오류 처리도 SDK가 맡습니다. (<a href="https://docs.aws.amazon.com/ses/latest/dg/send-email-api.html">Using the Amazon SES API to send email</a>)</p>
+<h2 id="smtp로-보내기">SMTP로 보내기</h2>
+<p>SMTP로 보내려면 엔드포인트 주소, 포트, SMTP 자격 증명이 필요합니다. 서울 리전의 엔드포인트는 <code>email-smtp.ap-northeast-2.amazonaws.com</code>입니다. (<a href="https://docs.aws.amazon.com/general/latest/gr/ses.html">Amazon SES endpoints and quotas</a>) 연결은 반드시 <a href="#term-tls">TLS</a>(Transport Layer Security: 전송 계층 보안)로 암호화해야 합니다. 25, 587, 2587 포트는 <a href="#term-starttls">STARTTLS</a>로 연결을 올리고, 465와 2465 포트는 처음부터 TLS로 연결합니다. (<a href="https://docs.aws.amazon.com/ses/latest/dg/smtp-connect.html">Connecting to an Amazon SES SMTP endpoint</a>) EC2에서는 기본으로 25번 포트 트래픽을 제한하므로 587을 쓰는 편이 안전합니다.</p>
+<p>SMTP 자격 증명은 SES 콘솔의 SMTP settings에서 Create SMTP credentials를 눌러 만듭니다. 그러면 IAM 콘솔이 열리고 SMTP 전용 사용자가 만들어지며, 비밀번호는 이 화면을 닫으면 다시 볼 수 없으니 바로 저장해야 합니다. 자격 증명은 리전마다 따로이고, 이 사용자에게는 <code>ses:SendRawEmail</code> 권한이 필요합니다. (<a href="https://docs.aws.amazon.com/ses/latest/dg/smtp-credentials.html">Obtaining Amazon SES SMTP credentials</a>)</p>
+<p>Node.js에서는 <a href="https://nodemailer.com/">Nodemailer</a>로 연결하는 방식이 흔합니다. 아래 코드는 587 포트에서 STARTTLS를 쓰는 설정입니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#ff7b72">import</span> nodemailer from <span style="color:#a5d6ff">&#34;nodemailer&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">const</span> transporter <span style="color:#ff7b72;font-weight:bold">=</span> nodemailer.createTransport({
+</span></span><span style="display:flex;"><span>  host<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;email-smtp.ap-northeast-2.amazonaws.com&#34;</span>,
+</span></span><span style="display:flex;"><span>  port<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">587</span>,
+</span></span><span style="display:flex;"><span>  secure<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#79c0ff">false</span>, <span style="color:#8b949e;font-style:italic">// 587은 연결 후 STARTTLS로 올립니다. 465를 쓸 때만 true
+</span></span></span><span style="display:flex;"><span>  auth<span style="color:#ff7b72;font-weight:bold">:</span> {
+</span></span><span style="display:flex;"><span>    user<span style="color:#ff7b72;font-weight:bold">:</span> process.env.SES_SMTP_USER,
+</span></span><span style="display:flex;"><span>    pass<span style="color:#ff7b72;font-weight:bold">:</span> process.env.SES_SMTP_PASSWORD,
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>});
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">const</span> info <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#ff7b72">await</span> transporter.sendMail({
+</span></span><span style="display:flex;"><span>  from<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#39;&#34;Example&#34; &lt;no-reply@example.com&gt;&#39;</span>,
+</span></span><span style="display:flex;"><span>  to<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;recipient@example.com&#34;</span>,
+</span></span><span style="display:flex;"><span>  subject<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;SES SMTP 테스트&#34;</span>,
+</span></span><span style="display:flex;"><span>  text<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;SMTP로 보낸 본문입니다.&#34;</span>,
+</span></span><span style="display:flex;"><span>  html<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;&lt;p&gt;SMTP로 보낸 본문입니다.&lt;/p&gt;&#34;</span>,
+</span></span><span style="display:flex;"><span>});
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>console.log(info.messageId);
+</span></span></code></pre></div><p>사용자 이름과 비밀번호는 코드에 적지 않고 환경 변수나 <a href="https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html">AWS Secrets Manager</a>에서 읽습니다. 공식 SMTP 예제도 정적 자격 증명을 권하지 않는다고 경고합니다. (<a href="https://docs.aws.amazon.com/ses/latest/dg/send-using-smtp-programmatically.html">Sending emails programmatically through the Amazon SES SMTP interface</a>) <code>from</code> 주소는 인증한 도메인에 속해야 하고, 샌드박스 상태라면 받는 주소도 인증한 주소여야 합니다.</p>
+<h2 id="aws-sdk-for-javascript-v3로-보내기">AWS SDK for JavaScript v3로 보내기</h2>
+<p>SES API v2는 <code>@aws-sdk/client-sesv2</code> 패키지의 <code>SendEmailCommand</code>로 호출합니다. 확인 시점의 최신 버전은 3.1162.0이고 Node.js 20 이상이 필요합니다. (<a href="https://registry.npmjs.org/@aws-sdk/client-sesv2/latest">npm registry</a>) 설치는 <code>npm install @aws-sdk/client-sesv2</code>입니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-javascript" data-lang="javascript"><span style="display:flex;"><span><span style="color:#ff7b72">import</span> { SESv2Client, SendEmailCommand } from <span style="color:#a5d6ff">&#34;@aws-sdk/client-sesv2&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#8b949e;font-style:italic">// 자격 증명은 SDK 기본 체인(환경 변수, 공유 설정 파일, IAM 역할)에서 읽습니다.
+</span></span></span><span style="display:flex;"><span><span style="color:#ff7b72">const</span> client <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#ff7b72">new</span> SESv2Client({ region<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;ap-northeast-2&#34;</span> });
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">const</span> command <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#ff7b72">new</span> SendEmailCommand({
+</span></span><span style="display:flex;"><span>  FromEmailAddress<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;no-reply@example.com&#34;</span>,
+</span></span><span style="display:flex;"><span>  Destination<span style="color:#ff7b72;font-weight:bold">:</span> { ToAddresses<span style="color:#ff7b72;font-weight:bold">:</span> [<span style="color:#a5d6ff">&#34;recipient@example.com&#34;</span>] },
+</span></span><span style="display:flex;"><span>  Content<span style="color:#ff7b72;font-weight:bold">:</span> {
+</span></span><span style="display:flex;"><span>    Simple<span style="color:#ff7b72;font-weight:bold">:</span> {
+</span></span><span style="display:flex;"><span>      Subject<span style="color:#ff7b72;font-weight:bold">:</span> { Data<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;SES SDK 테스트&#34;</span>, Charset<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;UTF-8&#34;</span> },
+</span></span><span style="display:flex;"><span>      Body<span style="color:#ff7b72;font-weight:bold">:</span> {
+</span></span><span style="display:flex;"><span>        Text<span style="color:#ff7b72;font-weight:bold">:</span> { Data<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;SDK로 보낸 본문입니다.&#34;</span>, Charset<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;UTF-8&#34;</span> },
+</span></span><span style="display:flex;"><span>        Html<span style="color:#ff7b72;font-weight:bold">:</span> { Data<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;&lt;p&gt;SDK로 보낸 본문입니다.&lt;/p&gt;&#34;</span>, Charset<span style="color:#ff7b72;font-weight:bold">:</span> <span style="color:#a5d6ff">&#34;UTF-8&#34;</span> },
+</span></span><span style="display:flex;"><span>      },
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>});
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#ff7b72">const</span> response <span style="color:#ff7b72;font-weight:bold">=</span> <span style="color:#ff7b72">await</span> client.send(command);
+</span></span><span style="display:flex;"><span>console.log(response.MessageId);
+</span></span></code></pre></div><p><code>Simple</code>은 SES가 MIME 메시지를 대신 조립해 주는 방식입니다. 첨부 파일이나 헤더를 직접 다루려면 <code>Raw</code>를, 템플릿에 값을 채워 보내려면 <code>Template</code>을 씁니다. (<a href="https://docs.aws.amazon.com/ses/latest/dg/send-email-api.html">Using the Amazon SES API to send email</a>) 코드 구조는 SDK 문서 기준으로 작성했고, 실제 호출은 확인하지 못했습니다.</p>
+<p>실행하는 IAM 사용자나 역할에는 <code>ses:SendEmail</code> 권한이 필요하며, <code>Resource</code>를 인증한 자격 증명의 ARN으로 좁힐 수 있습니다. (<a href="https://docs.aws.amazon.com/ses/latest/dg/control-user-access.html">Identity and access management in Amazon SES</a>) EC2나 Lambda에서는 액세스 키를 만들지 않고 IAM 역할을 붙이는 방식이 키 유출 위험이 적습니다.</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#7ee787">&#34;Version&#34;</span>: <span style="color:#a5d6ff">&#34;2012-10-17&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#7ee787">&#34;Statement&#34;</span>: [
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      <span style="color:#7ee787">&#34;Effect&#34;</span>: <span style="color:#a5d6ff">&#34;Allow&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#7ee787">&#34;Action&#34;</span>: <span style="color:#a5d6ff">&#34;ses:SendEmail&#34;</span>,
+</span></span><span style="display:flex;"><span>      <span style="color:#7ee787">&#34;Resource&#34;</span>: <span style="color:#a5d6ff">&#34;arn:aws:ses:ap-northeast-2:123456789012:identity/example.com&#34;</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  ]
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="발송이-실패할-때-확인할-것">발송이 실패할 때 확인할 것</h2>
+<p>샌드박스에서 인증하지 않은 주소로 보내면 거부되므로, 먼저 받는 주소를 인증했는지 봅니다. 리전이 다르면 자격 증명이 없는 것으로 처리되므로 코드의 <code>region</code>과 콘솔 리전이 같은지도 확인합니다. SMTP에서는 인증 실패가 흔한데, AWS 액세스 키를 SMTP 비밀번호로 잘못 넣은 경우가 대부분입니다. 메일이 들어갔는데 스팸함에 있다면 1편의 DKIM과 MAIL FROM 상태가 Successful인지 먼저 봅니다. 시험 발송에는 SES 메일박스 시뮬레이터 주소를 쓰면 발송 한도와 반송률에 반영되지 않습니다. (<a href="https://docs.aws.amazon.com/ses/latest/dg/send-using-smtp-programmatically.html">Sending emails programmatically through the Amazon SES SMTP interface</a>)</p>
+<h2 id="참고-자료">참고 자료</h2>
+<ul>
+<li><a href="https://docs.aws.amazon.com/ses/latest/dg/send-email-smtp.html">Using the Amazon SES SMTP interface to send email</a>, Amazon SES Developer Guide, 2026-11-05 확인</li>
+<li><a href="https://docs.aws.amazon.com/ses/latest/dg/smtp-connect.html">Connecting to an Amazon SES SMTP endpoint</a>, Amazon SES Developer Guide, 2026-11-05 확인</li>
+<li><a href="https://docs.aws.amazon.com/ses/latest/dg/smtp-credentials.html">Obtaining Amazon SES SMTP credentials</a>, Amazon SES Developer Guide, 2026-11-05 확인</li>
+<li><a href="https://docs.aws.amazon.com/ses/latest/dg/send-using-smtp-programmatically.html">Sending emails programmatically through the Amazon SES SMTP interface</a>, Amazon SES Developer Guide, 2026-11-05 확인</li>
+<li><a href="https://docs.aws.amazon.com/ses/latest/dg/send-email-api.html">Using the Amazon SES API to send email</a>, Amazon SES Developer Guide, 2026-11-05 확인</li>
+<li><a href="https://docs.aws.amazon.com/ses/latest/dg/control-user-access.html">Identity and access management in Amazon SES</a>, Amazon SES Developer Guide, 2026-11-05 확인</li>
+<li><a href="https://docs.aws.amazon.com/general/latest/gr/ses.html">Amazon Simple Email Service endpoints and quotas</a>, AWS General Reference, 2026-11-05 확인</li>
+</ul>
+<h2 id="용어-설명">용어 설명</h2>
+<h3 id="term-smtp">SMTP</h3>
+<p>Simple Mail Transfer Protocol. 메일 서버끼리, 그리고 클라이언트가 서버로 메일을 보낼 때 쓰는 표준 프로토콜입니다. (<a href="https://www.rfc-editor.org/rfc/rfc5321">RFC 5321</a>)</p>
+<h3 id="term-sdk">SDK</h3>
+<p>Software Development Kit. 특정 서비스의 API를 프로그래밍 언어에서 편하게 호출하도록 만든 라이브러리 묶음입니다. (<a href="https://docs.aws.amazon.com/sdkref/latest/guide/overview.html">AWS SDKs and Tools</a>)</p>
+<h3 id="term-tls">TLS</h3>
+<p>Transport Layer Security. 네트워크 연결을 암호화하고 상대를 확인하는 프로토콜입니다. (<a href="https://www.rfc-editor.org/rfc/rfc8446">RFC 8446</a>)</p>
+<h3 id="term-starttls">STARTTLS</h3>
+<p>일반 SMTP 연결을 시작한 뒤 TLS 암호화 연결로 올리는 SMTP 확장입니다. (<a href="https://www.rfc-editor.org/rfc/rfc3207">RFC 3207</a>)</p>
+]]></content:encoded></item></channel></rss>

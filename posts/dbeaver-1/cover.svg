@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="cover-title cover-desc">
+  <title id="cover-title">DB 관리 툴 비교 cover</title>
+  <desc id="cover-desc">짙은 청록색 배경 왼쪽에 제목 DB 관리 툴 비교, 오른쪽에 가운데 데이터베이스 하나와 선으로 연결된 작은 데이터베이스 네 개</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#042f2e" />
+      <stop offset="1" stop-color="#115e59" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0.78" cy="0.5" r="0.55">
+      <stop offset="0" stop-color="#5eead4" stop-opacity="0.28" />
+      <stop offset="1" stop-color="#5eead4" stop-opacity="0" />
+    </radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0 H0 V40" fill="none" stroke="#ffffff" stroke-opacity="0.06" stroke-width="1.5" />
+    </pattern>
+    <linearGradient id="big" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f59e0b" />
+      <stop offset="1" stop-color="#fcd34d" />
+    </linearGradient>
+    <linearGradient id="small" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0d9488" />
+      <stop offset="1" stop-color="#5eead4" />
+    </linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="220%">
+      <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#021a19" flood-opacity="0.6" />
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect width="1200" height="630" fill="url(#grid)" />
+  <rect width="1200" height="630" fill="url(#glow)" />
+
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <rect x="72" y="84" width="196" height="44" rx="22" fill="#5eead4" fill-opacity="0.14" stroke="#5eead4" stroke-opacity="0.6" />
+    <text x="170" y="113" font-size="20" font-weight="600" fill="#99f6e4" text-anchor="middle">DBeaver · SQL</text>
+    <rect x="284" y="84" width="72" height="44" rx="22" fill="#f59e0b" />
+    <text x="320" y="113" font-size="20" font-weight="700" fill="#1c1917" text-anchor="middle">1편</text>
+    <text x="72" y="232" font-size="64" font-weight="800" fill="#f0fdfa">DB 관리 툴 비교</text>
+    <text x="72" y="304" font-size="44" font-weight="700" fill="#99f6e4">DBeaver는 언제 맞을까</text>
+    <rect x="72" y="344" width="96" height="6" rx="3" fill="#f59e0b" />
+    <text x="72" y="404" font-size="26" font-weight="500" fill="#99f6e4">지원 DB · 라이선스 · 선택 기준</text>
+    <text x="72" y="566" font-size="22" font-weight="600" fill="#5eead4">휘발성 메모리 백업소</text>
+    <text x="294" y="566" font-size="22" font-weight="400" fill="#2dd4bf">dev.route50.kr</text>
+  </g>
+
+  <!-- 연결선 -->
+  <g stroke="#5eead4" stroke-opacity="0.7" stroke-width="3" stroke-dasharray="2.5 7" fill="none">
+    <path d="M900 330 L790 200" />
+    <path d="M900 330 L1040 200" />
+    <path d="M900 330 L790 470" />
+    <path d="M900 330 L1040 470" />
+  </g>
+
+  <!-- 작은 DB 4개 -->
+  <g filter="url(#shadow)">
+    <g transform="translate(740 130)">
+      <path d="M0 14 v54 a50 14 0 0 0 100 0 v-54" fill="url(#small)" />
+      <ellipse cx="50" cy="14" rx="50" ry="14" fill="#ccfbf1" />
+      <path d="M0 40 a50 14 0 0 0 100 0" fill="none" stroke="#f0fdfa" stroke-opacity="0.55" stroke-width="3" />
+    </g>
+    <g transform="translate(990 130)">
+      <path d="M0 14 v54 a50 14 0 0 0 100 0 v-54" fill="url(#small)" />
+      <ellipse cx="50" cy="14" rx="50" ry="14" fill="#ccfbf1" />
+      <path d="M0 40 a50 14 0 0 0 100 0" fill="none" stroke="#f0fdfa" stroke-opacity="0.55" stroke-width="3" />
+    </g>
+    <g transform="translate(740 400)">
+      <path d="M0 14 v54 a50 14 0 0 0 100 0 v-54" fill="url(#small)" />
+      <ellipse cx="50" cy="14" rx="50" ry="14" fill="#ccfbf1" />
+      <path d="M0 40 a50 14 0 0 0 100 0" fill="none" stroke="#f0fdfa" stroke-opacity="0.55" stroke-width="3" />
+    </g>
+    <g transform="translate(990 400)">
+      <path d="M0 14 v54 a50 14 0 0 0 100 0 v-54" fill="url(#small)" />
+      <ellipse cx="50" cy="14" rx="50" ry="14" fill="#ccfbf1" />
+      <path d="M0 40 a50 14 0 0 0 100 0" fill="none" stroke="#f0fdfa" stroke-opacity="0.55" stroke-width="3" />
+    </g>
+    <!-- 가운데 큰 DB -->
+    <g transform="translate(830 250)">
+      <path d="M0 24 v110 a70 22 0 0 0 140 0 v-110" fill="url(#big)" />
+      <ellipse cx="70" cy="24" rx="70" ry="22" fill="#fef3c7" />
+      <path d="M0 62 a70 22 0 0 0 140 0 M0 100 a70 22 0 0 0 140 0" fill="none" stroke="#fffbeb" stroke-opacity="0.6" stroke-width="3" />
+    </g>
+  </g>
+</svg>

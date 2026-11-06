@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="cover-title cover-desc">
+  <title id="cover-title">모노레포 1편 cover</title>
+  <desc id="cover-desc">연한 녹색 배경 왼쪽에 제목 '모노레포란 무엇인가', 오른쪽에 저장소 폴더 하나 안에 서버, 웹, 안드로이드, iOS 네 개의 타일이 들어 있는 그림</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f4f1e6" />
+      <stop offset="1" stop-color="#d9ead9" />
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0 H0 V40" fill="none" stroke="#166534" stroke-opacity="0.08" stroke-width="1.5" />
+    </pattern>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="220%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#14532d" flood-opacity="0.28" />
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect width="1200" height="630" fill="url(#grid)" />
+  <circle cx="1120" cy="60" r="220" fill="#16a34a" fill-opacity="0.12" />
+
+  <g font-family="Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans CJK KR', 'Malgun Gothic', sans-serif">
+    <rect x="72" y="84" width="152" height="44" rx="22" fill="#166534" />
+    <text x="148" y="113" font-size="20" font-weight="700" fill="#f0fdf4" text-anchor="middle">Monorepo</text>
+    <rect x="240" y="84" width="72" height="44" rx="22" fill="#ea580c" />
+    <text x="276" y="113" font-size="20" font-weight="700" fill="#ffffff" text-anchor="middle">1편</text>
+    <text x="72" y="236" font-size="68" font-weight="800" fill="#14301f">모노레포란</text>
+    <text x="72" y="320" font-size="68" font-weight="800" fill="#14301f">무엇인가</text>
+    <rect x="72" y="358" width="96" height="6" rx="3" fill="#ea580c" />
+    <text x="72" y="418" font-size="26" font-weight="500" fill="#3f5f4a">구조 · 폴더 구성 · 워크스페이스</text>
+    <text x="72" y="566" font-size="22" font-weight="600" fill="#3f5f4a">휘발성 메모리 백업소</text>
+    <text x="294" y="566" font-size="22" font-weight="400" fill="#4b6b56">dev.route50.kr</text>
+  </g>
+
+  <g transform="translate(676 130)" filter="url(#shadow)">
+    <path d="M0 36 Q0 16 20 16 H216 L248 52 H436 Q456 52 456 72 V344 Q456 364 436 364 H20 Q0 364 0 344 Z" fill="#166534" />
+    <rect x="0" y="72" width="456" height="292" rx="20" fill="#fffdf5" stroke="#166534" stroke-width="3" />
+    <g font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-weight="700">
+      <text x="28" y="40" font-size="22" fill="#f0fdf4">my-product/</text>
+      <rect x="28" y="100" width="190" height="112" rx="14" fill="#dcfce7" stroke="#16a34a" stroke-width="2" />
+      <text x="123" y="150" font-size="24" fill="#14532d" text-anchor="middle">server</text>
+      <text x="123" y="184" font-size="20" font-weight="500" fill="#166534" text-anchor="middle">API · DB</text>
+      <rect x="238" y="100" width="190" height="112" rx="14" fill="#dbeafe" stroke="#2563eb" stroke-width="2" />
+      <text x="333" y="150" font-size="24" fill="#1e3a8a" text-anchor="middle">web</text>
+      <text x="333" y="184" font-size="20" font-weight="500" fill="#1d4ed8" text-anchor="middle">React</text>
+      <rect x="28" y="232" width="190" height="112" rx="14" fill="#ffedd5" stroke="#ea580c" stroke-width="2" />
+      <text x="123" y="282" font-size="24" fill="#7c2d12" text-anchor="middle">android</text>
+      <text x="123" y="316" font-size="20" font-weight="500" fill="#c2410c" text-anchor="middle">Kotlin</text>
+      <rect x="238" y="232" width="190" height="112" rx="14" fill="#fce7f3" stroke="#db2777" stroke-width="2" />
+      <text x="333" y="282" font-size="24" fill="#831843" text-anchor="middle">ios</text>
+      <text x="333" y="316" font-size="20" font-weight="500" fill="#be185d" text-anchor="middle">Swift</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>DataGrip on 휘발성 메모리 백업소</title><link>https://dev.route50.kr/tags/datagrip/</link><description>Recent content in DataGrip on 휘발성 메모리 백업소</description><image><title>휘발성 메모리 백업소</title><url>https://dev.route50.kr/about/cover.jpg</url><link>https://dev.route50.kr/about/cover.jpg</link></image><generator>Hugo</generator><language>ko-kr</language><lastBuildDate>Wed, 04 Nov 2026 16:50:01 +0900</lastBuildDate><atom:link href="https://dev.route50.kr/tags/datagrip/index.xml" rel="self" type="application/rss+xml"/><item><title>1. 데이터베이스 관리 툴 비교와 DBeaver</title><link>https://dev.route50.kr/posts/dbeaver-1/</link><pubDate>Wed, 04 Nov 2026 00:00:00 +0900</pubDate><guid>https://dev.route50.kr/posts/dbeaver-1/</guid><description>DBeaver, DataGrip, pgAdmin, MySQL Workbench, HeidiSQL의 지원 데이터베이스와 라이선스를 비교하고, 여러 DB를 한 도구로 다룰 때 DBeaver가 맞는 경우를 정리했습니다.</description><content:encoded><![CDATA[<p>데이터베이스 관리 툴은 SQL을 입력하고 테이블을 보고 고치는 데스크톱 프로그램입니다. 한 종류의 DB만 쓴다면 그 DB 전용 도구(PostgreSQL은 pgAdmin, MySQL은 MySQL Workbench)가 가장 단순하고, 여러 종류를 한 화면에서 다루거나 무료로 넓게 쓰고 싶다면 오픈소스인 <a href="https://dbeaver.io/">DBeaver</a> Community가 무난한 선택입니다. DBeaver는 100개가 넘는 데이터베이스 드라이버를 기본으로 담은 무료 범용 DB 도구입니다. (<a href="https://github.com/dbeaver/dbeaver">DBeaver GitHub</a>)</p>
+<p>이 글은 각 도구의 공식 사이트와 문서를 2026-11-04에 확인해 정리했습니다. 설치와 사용법은 <a href="https://dev.route50.kr/posts/dbeaver-2/">2. DBeaver 설치와 기본 사용법</a>에 있습니다.</p>
+<h2 id="데이터베이스-관리-툴이-필요한-이유">데이터베이스 관리 툴이 필요한 이유</h2>
+<p>터미널의 <code>psql</code>이나 <code>mysql</code> 클라이언트로도 모든 작업은 할 수 있습니다. 그래도 <a href="#term-gui">GUI</a>(Graphical User Interface: 그래픽 사용자 인터페이스) 도구를 쓰는 이유는 테이블 구조와 데이터를 표로 훑어보고, 긴 쿼리를 편집기에서 다듬고, 결과를 파일로 내보내는 일이 훨씬 빠르기 때문입니다. 접속 정보를 저장해 두고 여러 서버를 오가는 것도 장점입니다.</p>
+<p>도구는 크게 세 갈래로 나뉩니다. 하나의 DB 제품에 맞춘 전용 도구, 여러 제품을 지원하는 범용 도구, 개발 환경에 통합된 <a href="#term-ide">IDE</a>(Integrated Development Environment: 통합 개발 환경)형 도구입니다.</p>
+<h2 id="주요-도구-5가지의-특징">주요 도구 5가지의 특징</h2>
+<p>아래 내용은 각 도구의 공식 소개 페이지에 적힌 것만 옮겼습니다.</p>
+<table>
+	<thead>
+			<tr>
+					<th>도구</th>
+					<th>지원 데이터베이스</th>
+					<th>라이선스</th>
+					<th>실행 환경</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>DBeaver Community</td>
+					<td>100개 이상 드라이버, JDBC·ODBC 지원 DB</td>
+					<td>무료, Apache-2.0</td>
+					<td>Windows, macOS, Linux</td>
+			</tr>
+			<tr>
+					<td>DataGrip</td>
+					<td>PostgreSQL, MySQL, Oracle, SQL Server, MongoDB 등</td>
+					<td>비상업적 용도 무료, 상업적 용도 구독</td>
+					<td>Windows, macOS, Linux</td>
+			</tr>
+			<tr>
+					<td>pgAdmin</td>
+					<td>PostgreSQL</td>
+					<td>무료, PostgreSQL 라이선스</td>
+					<td>Windows, macOS, Linux, 웹</td>
+			</tr>
+			<tr>
+					<td>MySQL Workbench</td>
+					<td>MySQL</td>
+					<td>Community 무료, Commercial 유료</td>
+					<td>공식 소개 문서에 목록 없음</td>
+			</tr>
+			<tr>
+					<td>HeidiSQL</td>
+					<td>MariaDB, MySQL, MS SQL, PostgreSQL, SQLite 등</td>
+					<td>무료 오픈소스</td>
+					<td>Windows, Linux, macOS</td>
+			</tr>
+	</tbody>
+</table>
+<figure>
+    <img loading="lazy" src="tools-comparison.svg"
+         alt="DBeaver, DataGrip, pgAdmin, MySQL Workbench, HeidiSQL을 한 DB 전용 도구와 여러 DB 범용 도구로 나눠 보여 주는 비교 그림"/> <figcaption>
+            <p>그림 1. 전용 도구와 범용 도구 (직접 제작)</p>
+        </figcaption>
+</figure>
+
+<h3 id="dbeaver-community">DBeaver Community</h3>
+<p>DBeaver Community는 Java로 만든 오픈소스 데스크톱 도구입니다. Eclipse RCP로 화면을 만들고 <a href="#term-jdbc">JDBC</a>(Java Database Connectivity: 자바 데이터베이스 연결 API)로 데이터베이스에 접속하며, 모든 배포판에 OpenJDK 25가 들어 있습니다. (<a href="https://github.com/dbeaver/dbeaver">DBeaver GitHub</a>) 장점은 하나의 프로그램으로 여러 DB를 같은 화면 구성에서 다룬다는 점입니다. 단점은 Community 버전에 <a href="#term-nosql">NoSQL</a>(관계형이 아닌 데이터베이스) 지원이 빠져 있다는 것입니다. 상용 버전이 NoSQL과 추가 기능을 더합니다. ER 다이어그램을 직접 고치는 편집 모드도 Enterprise와 Ultimate 버전에서만 쓸 수 있다고 문서에 적혀 있습니다. (<a href="https://github.com/dbeaver/dbeaver/wiki/Edit-mode">Edit mode</a>)</p>
+<h3 id="datagrip">DataGrip</h3>
+<p>DataGrip은 JetBrains가 만든 DB 전용 IDE입니다. 스키마를 이해하는 코드 완성, 오류 검사, 로컬 히스토리, Git 연동을 내세웁니다. 비상업적 용도는 무료이고 상업적으로 쓰려면 구독해야 합니다. (<a href="https://www.jetbrains.com/datagrip/">DataGrip</a>) 이미 JetBrains 도구를 쓰고 있고 회사가 비용을 낼 수 있다면 잘 맞고, 개인 업무용으로 비용을 내기 어렵다면 부담이 됩니다.</p>
+<h3 id="pgadmin">pgAdmin</h3>
+<p>pgAdmin은 PostgreSQL의 관리·개발·모니터링 도구입니다. 데스크톱 앱으로도, 브라우저로 접속하는 웹 앱으로도 배포할 수 있습니다. (<a href="https://www.pgadmin.org/">pgAdmin</a>) PostgreSQL만 쓴다면 충분하지만 다른 DB는 지원 대상이 아닙니다.</p>
+<h3 id="mysql-workbench">MySQL Workbench</h3>
+<p>MySQL Workbench는 SQL 개발, 스키마 모델링, 서버 관리, 다른 DB에서의 데이터 이전 기능을 한 곳에 모은 MySQL 전용 도구입니다. 공식 문서는 MySQL Server 8.0을 완전히 지원하며 8.4처럼 더 새로운 버전은 연결되더라도 일부 기능이 지원되지 않을 수 있다고 밝힙니다. (<a href="https://dev.mysql.com/doc/workbench/en/wb-intro.html">MySQL Workbench</a>) 서버 버전이 올라가면 도구의 지원 범위를 먼저 확인해야 합니다.</p>
+<h3 id="heidisql">HeidiSQL</h3>
+<p>HeidiSQL은 2002년에 시작한 무료 오픈소스 도구로 MariaDB, MySQL, MS SQL, PostgreSQL, SQLite 등을 지원합니다. Windows 버전은 Delphi, Linux와 macOS 버전은 Lazarus로 만들었습니다. (<a href="https://www.heidisql.com/">HeidiSQL</a>) 가볍게 여러 종류의 DB에 접속하는 용도에 어울립니다.</p>
+<h2 id="어떤-도구를-고를까">어떤 도구를 고를까</h2>
+<p>선택 기준은 쓰는 DB의 개수와 비용입니다. DB가 하나로 정해져 있으면 전용 도구(PostgreSQL이면 pgAdmin, MySQL이면 MySQL Workbench)를 먼저 써 보세요. 업무에서 PostgreSQL, MySQL, SQLite처럼 여러 종류를 오간다면 접속 방법과 단축키를 하나만 익히면 되는 DBeaver나 DataGrip이 편합니다. 그중 무료로 쓰고 싶다면 DBeaver Community, 코드 완성 같은 IDE 기능을 중시하고 구독 비용이 문제없다면 DataGrip입니다.</p>
+<p>이 글에서 도구 사이의 속도나 사용감 차이는 비교하지 않았습니다. 직접 측정하지 않은 내용이라 공식 자료에 적힌 지원 범위와 라이선스만 다뤘습니다.</p>
+<h2 id="참고-자료">참고 자료</h2>
+<ul>
+<li><a href="https://github.com/dbeaver/dbeaver">DBeaver Community GitHub</a>, GitHub, 2026-11-04 확인</li>
+<li><a href="https://github.com/dbeaver/dbeaver/wiki/Edit-mode">Edit mode</a>, DBeaver Wiki, 2026-11-04 확인</li>
+<li><a href="https://www.jetbrains.com/datagrip/">DataGrip</a>, JetBrains, 2026-11-04 확인</li>
+<li><a href="https://www.pgadmin.org/">pgAdmin</a>, pgAdmin, 2026-11-04 확인</li>
+<li><a href="https://dev.mysql.com/doc/workbench/en/wb-intro.html">Introduction to MySQL Workbench</a>, MySQL Reference Manual, 2026-11-04 확인</li>
+<li><a href="https://www.heidisql.com/">HeidiSQL</a>, HeidiSQL, 2026-11-04 확인</li>
+</ul>
+<h2 id="용어-설명">용어 설명</h2>
+<h3 id="term-gui">GUI</h3>
+<p>Graphical User Interface(그래픽 사용자 인터페이스). 명령어 대신 창, 버튼, 표로 조작하는 화면입니다. (<a href="https://en.wikipedia.org/wiki/Graphical_user_interface">Graphical user interface</a>)</p>
+<h3 id="term-nosql">NoSQL</h3>
+<p>관계형 테이블이 아닌 문서, 키-값 같은 방식으로 데이터를 저장하는 데이터베이스를 가리키는 말입니다. MongoDB와 Redis가 예입니다. (<a href="https://www.mongodb.com/resources/basics/databases/nosql-explained">MongoDB</a>)</p>
+<h3 id="term-ide">IDE</h3>
+<p>Integrated Development Environment(통합 개발 환경). 코드 편집, 자동 완성, 실행, 디버깅을 한 프로그램에 모은 개발 도구입니다. (<a href="https://www.jetbrains.com/datagrip/">DataGrip</a>)</p>
+<h3 id="term-jdbc">JDBC</h3>
+<p>Java Database Connectivity. Java 프로그램이 데이터베이스에 접속하고 SQL을 실행하는 표준 API입니다. DBeaver는 이 방식으로 DB 드라이버를 연결합니다. (<a href="https://docs.oracle.com/javase/tutorial/jdbc/basics/index.html">JDBC Basics</a>)</p>
+]]></content:encoded></item></channel></rss>

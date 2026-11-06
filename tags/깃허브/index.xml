@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>깃허브 on 휘발성 메모리 백업소</title><link>https://dev.route50.kr/tags/%EA%B9%83%ED%97%88%EB%B8%8C/</link><description>Recent content in 깃허브 on 휘발성 메모리 백업소</description><image><title>휘발성 메모리 백업소</title><url>https://dev.route50.kr/about/cover.jpg</url><link>https://dev.route50.kr/about/cover.jpg</link></image><generator>Hugo</generator><language>ko-kr</language><lastBuildDate>Fri, 06 Nov 2026 17:01:08 +0900</lastBuildDate><atom:link href="https://dev.route50.kr/tags/%EA%B9%83%ED%97%88%EB%B8%8C/index.xml" rel="self" type="application/rss+xml"/><item><title>3. GitHub 계정과 저장소 보안 설정하기</title><link>https://dev.route50.kr/posts/github-guide-3/</link><pubDate>Fri, 06 Nov 2026 00:00:00 +0900</pubDate><guid>https://dev.route50.kr/posts/github-guide-3/</guid><description>GitHub 계정의 2단계 인증과 passkey, 브랜치 보호 규칙과 규칙 세트, Dependabot, 비밀 정보 푸시 차단 기능을 공식 문서 기준으로 정리했습니다.</description><content:encoded><![CDATA[<p>GitHub 보안은 계정부터 시작합니다. 2단계 인증을 켜서 계정을 지키고, 중요한 브랜치에는 보호 규칙을 걸고, Dependabot으로 취약한 의존성을 찾고, 비밀 정보가 담긴 푸시를 차단하는 기능을 확인하면 됩니다. 이 글은 이 네 가지가 무엇을 하고 어디서 켜는지 정리했습니다.</p>
+<p>협업 기능은 <a href="https://dev.route50.kr/posts/github-guide-1/">1. GitHub 이슈, 풀 리퀘스트, 프로젝트로 협업하기</a>, 자동화는 <a href="https://dev.route50.kr/posts/github-guide-2/">2. GitHub Actions, Pages, Releases, Codespaces로 자동화하기</a>에 있습니다. 기준은 2026-11-06에 확인한 GitHub Docs입니다. 기능별 제공 범위는 요금제와 저장소 공개 여부에 따라 달라지며, 문서에서 확인되지 않은 부분은 아래에 그렇게 적었습니다. 직접 실행한 결과는 싣지 않았습니다.</p>
+<h2 id="2단계-인증과-passkey">2단계 인증과 passkey</h2>
+<p>2단계 인증(<a href="#term-2fa">2FA</a>, Two-Factor Authentication)은 로그인에 비밀번호 외에 두 번째 확인 수단을 요구해서, 비밀번호가 새어도 계정에 들어오지 못하게 막는 기능입니다. (<a href="https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/about-two-factor-authentication">About two-factor authentication</a>)</p>
+<p>GitHub는 2023년 3월부터 GitHub.com에서 코드를 기여하는 사용자에게 2FA를 요구하기 시작했지만, 대상은 선정된 그룹입니다. 안내를 받지 않았다면 의무는 아니고, GitHub는 켜기를 강력히 권합니다. 수단은 인증 앱(<a href="#term-totp">TOTP</a>), 보안 키(WebAuthn), GitHub Mobile 등이 있습니다. <a href="#term-passkey">passkey</a>는 비밀번호와 2FA 요구를 한 번에 만족시켜 한 단계로 로그인할 수 있게 하지만, 잠기는 사고를 줄이려면 TOTP 앱 같은 대체 수단을 함께 등록하라고 안내합니다.</p>
+<h2 id="브랜치-보호-규칙과-규칙-세트">브랜치 보호 규칙과 규칙 세트</h2>
+<p>보호 규칙은 중요한 브랜치에 아무나 바로 푸시하거나 지우지 못하게 막는 설정입니다. 병합 전 풀 리퀘스트와 승인 수 요구, 상태 검사 통과, 대화 해결, 서명된 커밋, 선형 기록, 병합 대기열을 요구할 수 있고, 브랜치를 읽기 전용으로 잠그거나 푸시할 수 있는 사용자를 제한할 수 있습니다. 강제 푸시와 삭제는 기본으로 막힙니다. 관리자는 기본적으로 규칙에서 제외되며, 관리자에게도 적용하는 설정을 따로 켭니다. (<a href="https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches">About protected branches</a>)</p>
+<p>규칙 세트(ruleset)는 브랜치와 태그에 적용하는 이름 붙은 규칙 목록입니다. 한 브랜치에 여러 규칙 세트를 동시에 적용할 수 있고, 삭제하지 않고 활성과 비활성을 바꿀 수 있으며, 읽기 권한이 있으면 누구나 활성 규칙 세트를 볼 수 있습니다. 보호 규칙과 함께 적용되면 모두 적용되고 같은 규칙이 다르면 더 엄격한 쪽을 따릅니다. (<a href="https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets">About rulesets</a>)</p>
+<p>요금제별 제공 범위는 확인하지 못했습니다. 위 규칙 세트 문서는 Team과 Enterprise 요금제용이라고 적었고, 보호 규칙 문서는 푸시 제한이 Free 조직의 공개 저장소와 Team, Enterprise Cloud 조직의 모든 저장소에서 가능하다는 것만 밝힙니다. Free 개인 저장소에서 어떤 규칙을 쓸 수 있는지는 저장소의 Settings 화면에서 확인합니다.</p>
+<h2 id="dependabot으로-취약한-의존성-찾기">Dependabot으로 취약한 의존성 찾기</h2>
+<p>Dependabot은 의존성 관리 기능 세 가지를 묶은 이름입니다. 알림(alerts)은 알려진 취약점이 있는 의존성을 알려 주고, 보안 업데이트(security updates)는 그 취약점을 고치는 풀 리퀘스트를 자동으로 열고, 버전 업데이트(version updates)는 의존성을 최신으로 유지하는 풀 리퀘스트를 자동으로 엽니다. (<a href="https://docs.github.com/en/code-security/tutorials/secure-your-dependencies/dependabot-quickstart">Dependabot quickstart guide</a>)</p>
+<p>저장소의 Settings에서 <code>Advanced Security</code>를 열고 Dependabot 항목의 <code>Enable</code>을 누르면 켤 수 있습니다. 켜면 의존성 그래프도 함께 켜집니다. 버전 업데이트를 켜면 <code>.github</code> 디렉터리에 <code>dependabot.yml</code>이 만들어지고, 이 파일을 고쳐 설정합니다.</p>
+<p>알림은 기본 브랜치를 검사하며, GitHub Advisory Database에 새 취약점이 추가되거나 의존성 그래프가 바뀔 때 보냅니다. 알림에는 영향받는 파일, 취약점 설명과 심각도, 고쳐진 버전이 있으면 그 버전이 나옵니다. 보관된 저장소는 검사하지 않습니다. (<a href="https://docs.github.com/en/code-security/concepts/supply-chain-security/dependabot-alerts">About Dependabot alerts</a>)</p>
+<h2 id="비밀-정보-푸시를-막는-push-protection">비밀 정보 푸시를 막는 push protection</h2>
+<p>Push protection은 하드코딩된 비밀 정보가 담긴 푸시를 저장소에 닿기 전에 차단하는 기능입니다. 알림만 보내는 것과 달리 사고를 미리 막습니다. 대상은 주요 제공자의 자격 증명, 개인 키와 데이터베이스 연결 문자열 같은 정형 비밀 정보, 직접 정의한 패턴입니다. 사용자 수준의 push protection은 기본으로 켜져 있고 GitHub.com에서 공개 저장소로 비밀 정보를 푸시하는 것을 막습니다. 저장소 수준 설정은 GitHub Secret Protection이 필요합니다. (<a href="https://docs.github.com/en/code-security/concepts/secret-security/push-protection">About push protection</a>)</p>
+<p>차단되면 코드에서 비밀 정보를 지우고 다시 푸시합니다. 쓰기 권한이 있으면 <code>테스트에 쓰는 값</code>, <code>오탐</code>, <code>나중에 고치겠음</code> 중 사유를 골라 우회할 수 있고, 우회 기록은 감사 로그에 남으며 소유자와 관리자에게 메일이 갑니다. 이미 저장소에 올라간 비밀 정보를 처리하는 방법은 이 문서에 없습니다. 일반적으로는 노출된 자격 증명을 폐기하고 새로 발급하는 것이 먼저이지만, 이 부분은 문서로 확인한 내용이 아니라 일반적인 관행입니다.</p>
+<h2 id="참고-자료">참고 자료</h2>
+<ul>
+<li><a href="https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/about-two-factor-authentication">About two-factor authentication</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches">About protected branches</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets">About rulesets</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/code-security/tutorials/secure-your-dependencies/dependabot-quickstart">Dependabot quickstart guide</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/code-security/concepts/supply-chain-security/dependabot-alerts">About Dependabot alerts</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/code-security/concepts/secret-security/push-protection">About push protection</a>, GitHub Docs, 2026-11-06 확인</li>
+</ul>
+<h2 id="용어-설명">용어 설명</h2>
+<h3 id="term-2fa">2FA</h3>
+<p>Two-Factor Authentication(2단계 인증). 비밀번호에 더해 두 번째 확인 수단을 요구하는 로그인 방식입니다. (<a href="https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/about-two-factor-authentication">About two-factor authentication</a>)</p>
+<h3 id="term-totp">TOTP</h3>
+<p>Time-based One-Time Password(시간 기반 일회용 비밀번호). 인증 앱이 로그인할 때 보여 주는 짧은 시간 동안만 유효한 코드입니다. (<a href="https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/about-two-factor-authentication">About two-factor authentication</a>)</p>
+<h3 id="term-passkey">passkey</h3>
+<p>비밀번호 없이 기기 인증으로 로그인하는 수단입니다. GitHub에서는 비밀번호와 2FA 요구를 한 번에 만족시킬 수 있습니다. (<a href="https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/about-two-factor-authentication">About two-factor authentication</a>)</p>
+]]></content:encoded></item><item><title>2. GitHub Actions, Pages, Releases, Codespaces로 자동화하기</title><link>https://dev.route50.kr/posts/github-guide-2/</link><pubDate>Fri, 06 Nov 2026 00:00:00 +0900</pubDate><guid>https://dev.route50.kr/posts/github-guide-2/</guid><description>GitHub Actions로 검사를 자동화하고, Pages로 사이트를 게시하고, Releases로 배포본을 묶고, Codespaces로 브라우저에서 개발하는 방법과 무료 사용량을 정리했습니다.</description><content:encoded><![CDATA[<p>GitHub Actions는 저장소에서 일어난 일을 계기로 검사와 배포를 자동으로 실행하는 기능이고, 같은 계정에서 Pages로 정적 사이트를 게시하고 Releases로 배포본을 묶고 Codespaces로 클라우드 개발 환경을 열 수 있습니다. 이 글은 소스 저장소로만 쓰던 사용자가 저장소 밖의 작업까지 GitHub 안에서 처리하는 방법을 정리했습니다.</p>
+<p>협업 기능은 <a href="https://dev.route50.kr/posts/github-guide-1/">1. GitHub 이슈, 풀 리퀘스트, 프로젝트로 협업하기</a>, 보안 설정은 <a href="https://dev.route50.kr/posts/github-guide-3/">3. GitHub 계정과 저장소 보안 설정하기</a>에 있습니다. 기준은 2026-11-06에 확인한 GitHub Docs입니다. 무료 사용량은 요금제와 시점에 따라 바뀌므로 적용 전 계정의 청구 화면도 확인합니다. 워크플로 파일은 예시를 싣지 않았고, 이 글에 직접 실행한 결과는 없습니다.</p>
+<h2 id="github-actions로-검사와-배포-자동화하기">GitHub Actions로 검사와 배포 자동화하기</h2>
+<p>GitHub Actions의 워크플로(workflow)는 하나 이상의 작업(job)을 실행하는 자동화 절차로, 저장소의 <a href="#term-yaml">YAML</a> 파일에 정의합니다. 이벤트가 일어나거나 사용자가 직접 요청하거나 일정에 따라 실행됩니다. (<a href="https://docs.github.com/en/actions/get-started/understand-github-actions">Understanding GitHub Actions</a>)</p>
+<p>용어는 네 가지만 알면 됩니다. 이벤트(event)는 풀 리퀘스트를 열거나 커밋을 푸시하는 것처럼 워크플로를 시작시키는 저장소 안의 활동입니다. 작업(job)은 같은 러너에서 실행되는 단계들의 묶음이며 기본적으로 병렬로 실행됩니다. 러너(runner)는 워크플로를 실제로 실행하는 서버이고 한 번에 작업 하나를 맡습니다. 워크플로 파일은 저장소의 <code>.github/workflows</code> 디렉터리에 두며, 파일을 여러 개 둘 수 있습니다.</p>
+<p>흔한 용도는 풀 리퀘스트가 열릴 때 테스트와 문법 검사를 돌리는 것입니다. 1편의 풀 리퀘스트와 결합하면 검사를 통과한 변경만 병합하는 흐름이 만들어집니다.</p>
+<h3 id="무료-사용량">무료 사용량</h3>
+<p>공개 저장소에서는 표준 GitHub 호스티드 러너가 무료이고 포함 사용량에서 차감되지 않습니다. 비공개 저장소는 분 단위가 아니라 금액으로 표시된 포함 사용량이 월마다 주어집니다. (<a href="https://docs.github.com/en/billing/concepts/product-billing/github-actions">GitHub Actions billing</a>)</p>
+<table>
+	<thead>
+			<tr>
+					<th>요금제</th>
+					<th>월 포함 사용량</th>
+					<th>아티팩트 저장소</th>
+					<th>캐시 저장소(저장소당)</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>GitHub Free</td>
+					<td>12달러</td>
+					<td>500MB</td>
+					<td>10GB</td>
+			</tr>
+			<tr>
+					<td>GitHub Pro</td>
+					<td>18달러</td>
+					<td>1GB</td>
+					<td>10GB</td>
+			</tr>
+			<tr>
+					<td>GitHub Team</td>
+					<td>18달러</td>
+					<td>2GB</td>
+					<td>10GB</td>
+			</tr>
+	</tbody>
+</table>
+<p>아티팩트 저장소는 GitHub Packages와 나누어 씁니다. 캐시 저장소는 별도 한도입니다.</p>
+<h2 id="github-pages로-사이트-게시하기">GitHub Pages로 사이트 게시하기</h2>
+<p>GitHub Pages는 저장소의 HTML, CSS, JavaScript 파일을 게시하는 정적 사이트 호스팅 서비스이고, 빌드 단계는 선택입니다. 사용자 또는 조직 사이트는 <code>&lt;owner&gt;.github.io</code> 이름의 저장소에 두며 계정당 하나, 프로젝트 사이트는 저장소마다 하나입니다. <code>github.io</code> 주소나 직접 가진 도메인을 쓸 수 있습니다. (<a href="https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages">What is GitHub Pages?</a>)</p>
+<p>게시 방식은 두 가지입니다. 브랜치에서 배포하는 방식은 고른 브랜치에 푸시하면 게시되며 저장소 루트나 <code>/docs</code> 폴더를 지정합니다. GitHub Actions 방식은 직접 만든 워크플로로 빌드해서 Jekyll 외의 도구도 쓸 수 있고, 빌드 결과물을 위한 전용 브랜치가 필요 없습니다. 이 블로그처럼 Hugo로 만든 사이트는 후자에 해당합니다. 어느 쪽이든 저장소가 비공개여도 사이트는 누구나 볼 수 있다는 점은 주의해야 합니다. (<a href="https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site">Configuring a publishing source</a>)</p>
+<h2 id="releases로-배포본-묶기">Releases로 배포본 묶기</h2>
+<p>릴리스는 소프트웨어를 다른 사람이 내려받아 쓸 수 있게 묶은 배포 단위이며, Git 태그를 바탕으로 합니다. 릴리스에는 릴리스 노트, 첨부 파일, 소스 아카이브가 들어갑니다. 릴리스 노트는 직접 쓰거나 템플릿으로 생성할 수 있고, 첨부 파일은 릴리스당 최대 1,000개, 파일당 2GiB 미만입니다. 태그가 가리키는 시점의 소스는 zip과 tarball로 자동 제공됩니다. (<a href="https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases">About releases</a>)</p>
+<p>태그를 만든 날과 릴리스를 만든 날은 다를 수 있습니다.</p>
+<h2 id="codespaces로-브라우저에서-개발하기">Codespaces로 브라우저에서 개발하기</h2>
+<p>Codespace는 클라우드에서 실행되는 개발 환경입니다. 각 codespace는 가상 머신 위의 Docker 컨테이너에서 돌아가며, 2코어 8GB RAM 32GB 저장소부터 32코어 128GB RAM 128GB 저장소까지 사양을 고를 수 있습니다. 템플릿이나 저장소의 어느 브랜치, 커밋에서도 만들 수 있고, 브라우저, Visual Studio Code, GitHub CLI로 접속합니다. (<a href="https://docs.github.com/en/codespaces/about-codespaces/what-are-codespaces">What are GitHub Codespaces?</a>)</p>
+<p>Free와 Pro 개인 계정에는 월 무료 사용량이 있고, Free는 월 120시간의 컴퓨트와 15GB-월 저장소, Pro는 180시간과 20GB-월입니다. 다만 이 시간은 머신의 코어 수만큼 배수가 곱해져 차감되는 것으로 보이므로, 정확한 계산은 계정의 사용량 보고서에서 확인합니다. 결제 수단이 없으면 한도에 닿을 때 사용이 멈춥니다. (<a href="https://docs.github.com/en/billing/concepts/product-billing/github-codespaces">GitHub Codespaces billing</a>)</p>
+<h2 id="참고-자료">참고 자료</h2>
+<ul>
+<li><a href="https://docs.github.com/en/actions/get-started/understand-github-actions">Understanding GitHub Actions</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/billing/concepts/product-billing/github-actions">GitHub Actions billing</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages">What is GitHub Pages?</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site">Configuring a publishing source for your GitHub Pages site</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases">About releases</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/codespaces/about-codespaces/what-are-codespaces">What are GitHub Codespaces?</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/billing/concepts/product-billing/github-codespaces">GitHub Codespaces billing</a>, GitHub Docs, 2026-11-06 확인</li>
+</ul>
+<h2 id="용어-설명">용어 설명</h2>
+<h3 id="term-yaml">YAML</h3>
+<p>들여쓰기로 구조를 나타내는 설정 파일 형식입니다. GitHub Actions 워크플로 파일은 이 형식으로 씁니다. (<a href="https://docs.github.com/en/actions/get-started/understand-github-actions">Understanding GitHub Actions</a>)</p>
+]]></content:encoded></item><item><title>1. GitHub 이슈, 풀 리퀘스트, 프로젝트로 협업하기</title><link>https://dev.route50.kr/posts/github-guide-1/</link><pubDate>Fri, 06 Nov 2026 00:00:00 +0900</pubDate><guid>https://dev.route50.kr/posts/github-guide-1/</guid><description>소스 저장소로만 쓰던 GitHub에서 이슈, 풀 리퀘스트, Projects, Discussions, 프로필 README를 쓰는 방법을 공식 문서 기준으로 정리했습니다.</description><content:encoded><![CDATA[<p>GitHub는 코드를 올려 두는 곳 이상입니다. 같은 저장소 안에서 할 일을 기록하는 이슈, 변경을 검토하는 풀 리퀘스트, 진행 상황을 보는 Projects를 함께 쓰면 혼자 하는 작업도 기록이 남고 협업으로 넓히기도 쉽습니다. 이 글은 GitHub에 코드만 올려 온 사용자가 가장 먼저 시도할 만한 협업 기능을 정리했습니다.</p>
+<p>자동 검사와 배포는 <a href="https://dev.route50.kr/posts/github-guide-2/">2. GitHub Actions, Pages, Releases, Codespaces로 자동화하기</a>, 계정과 저장소 보안은 <a href="https://dev.route50.kr/posts/github-guide-3/">3. GitHub 계정과 저장소 보안 설정하기</a>에 있습니다. 기준은 2026-11-06에 확인한 GitHub Docs입니다. 화면과 요금제별 제공 범위는 바뀔 수 있습니다. 이 글은 문서를 근거로 정리했으며 직접 실행한 결과는 싣지 않았습니다.</p>
+<h2 id="git과-github는-무엇이-다른가">Git과 GitHub는 무엇이 다른가</h2>
+<p>Git은 파일의 변경 내용을 추적하는 버전 관리 시스템이고, GitHub는 Git 저장소를 클라우드에 두고 그 위에 계획과 협업 도구를 얹은 플랫폼입니다. (<a href="https://docs.github.com/en/get-started/start-your-journey/what-is-github">About GitHub and Git</a>) 커밋과 브랜치는 Git의 기능이고, 이슈와 풀 리퀘스트는 GitHub가 더한 기능입니다.</p>
+<p>GitHub 문서는 이 플랫폼의 기능을 계획, 코드 관리, 코드 리뷰, 자동 테스트, 배포, 유지보수와 보안, 협업, 호스팅과 게시, AI 도구로 나누어 소개합니다. 소스 저장소로만 쓰는 사용자는 이 가운데 코드 관리만 쓰고 있는 셈입니다.</p>
+<h2 id="이슈로-할-일과-버그-기록하기">이슈로 할 일과 버그 기록하기</h2>
+<p>이슈는 저장소 안에서 작업을 계획하고 논의하고 추적하는 기능입니다. 버그 제보, 기능 요청, 아이디어, 피드백, 할 일에 모두 쓸 수 있고, 큰 작업은 하위 이슈로 나눌 수 있습니다. (<a href="https://docs.github.com/en/issues/tracking-your-work-with-issues/learning-about-issues/about-issues">About issues</a>)</p>
+<p>혼자 쓰는 저장소에서도 이슈는 유용합니다. 나중에 고칠 문제를 메모에 흩어 두는 대신 이슈로 남기면 번호가 붙고, 이후 커밋과 풀 리퀘스트에서 그 번호로 연결됩니다. 이슈에는 레이블과 마일스톤 같은 정보를 붙여 분류할 수 있고, 이슈 템플릿과 양식을 만들어 두면 제보자가 필요한 정보를 빠뜨리지 않고 적게 할 수 있습니다.</p>
+<h2 id="풀-리퀘스트로-변경-검토하기">풀 리퀘스트로 변경 검토하기</h2>
+<p><a href="#term-pr">풀 리퀘스트</a>(Pull Request, 변경 병합 요청, PR)는 코드 변경을 프로젝트에 합치자고 제안하는 기능입니다. 합치기 전에 검토자가 변경을 보고 논의할 수 있어서 문제를 일찍 찾을 수 있습니다. (<a href="https://docs.github.com/en/pull-requests/reference/pull-requests">About pull requests</a>)</p>
+<p>기본 흐름은 작업 브랜치를 만들어 커밋하고, 그 브랜치를 기본 브랜치로 합치는 PR을 열고, 검토를 거쳐 병합하는 것입니다. 아직 검토받을 준비가 안 됐다면 초안(draft) PR로 열 수 있습니다. 초안은 병합할 수 없고, 코드 소유자에게 자동으로 검토가 요청되지도 않습니다. 준비되면 ready for review로 바꾸고, 언제든 다시 초안으로 되돌릴 수 있습니다.</p>
+<p>PR 본문에 키워드를 적으면 병합할 때 이슈가 자동으로 닫힙니다. 사용할 수 있는 키워드는 <code>close</code>, <code>closes</code>, <code>closed</code>, <code>fix</code>, <code>fixes</code>, <code>fixed</code>, <code>resolve</code>, <code>resolves</code>, <code>resolved</code>입니다. (<a href="https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue">Linking a pull request to an issue</a>)</p>
+<div class="highlight"><pre tabindex="0" style="color:#e6edf3;background-color:#0d1117;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>Closes #10
+</span></span></code></pre></div><p>이슈가 여러 개면 <code>Resolves #10, resolves #123</code>처럼 이슈마다 키워드를 적습니다. 다른 저장소의 이슈는 <code>Fixes octo-org/octo-repo#100</code> 꼴로 씁니다. 이 연결은 PR이 저장소의 기본 브랜치를 대상으로 할 때만 동작하며, 다른 브랜치가 대상이면 키워드가 무시됩니다.</p>
+<h2 id="projects로-진행-상황-한눈에-보기">Projects로 진행 상황 한눈에 보기</h2>
+<p>GitHub Projects는 이슈와 PR을 모아 계획하고 진행 상황을 추적하는 도구입니다. 이슈, PR과 동기화되어서 어느 쪽에서 바꿔도 양쪽에 반영됩니다. (<a href="https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/about-projects">About Projects</a>)</p>
+<p>보는 방식은 세 가지입니다. 표(table)는 스프레드시트처럼 촘촘하게 나열하는 방식이라 백로그 정리에 맞고, 보드(board)는 칸반 방식으로 단계별 진행을 보여 주며, 로드맵(roadmap)은 일정을 타임라인으로 보여 줍니다. 날짜, 숫자, 단일 선택, 텍스트, 반복(iteration) 같은 사용자 지정 필드를 추가할 수 있습니다. 항목이 조건에 맞으면 자동으로 추가하거나 보관하는 자동화도 지원합니다.</p>
+<h2 id="discussions로-질문과-의견-받기">Discussions로 질문과 의견 받기</h2>
+<p>Discussions는 프로젝트 커뮤니티가 외부 도구 없이 열린 대화를 나누는 공간입니다. 공지, 질문과 답변, 의견 수렴, 투표에 쓸 수 있습니다. 관리자가 저장소나 조직에서 기능을 먼저 켜야 하며, 켜면 접근 권한이 있는 누구나 토론을 열 수 있습니다. (<a href="https://docs.github.com/en/discussions/collaborating-with-your-community-using-discussions/about-discussions">About discussions</a>)</p>
+<p>정해진 작업이 아니라 열린 주제라면 이슈 대신 토론이 맞습니다. 이슈로 들어온 열린 질문은 토론으로 바꿀 수 있습니다. 질문과 답변 카테고리에서는 답변을 채택 표시할 수 있습니다.</p>
+<h2 id="프로필-readme로-나를-소개하기">프로필 README로 나를 소개하기</h2>
+<p>프로필 <a href="#term-readme">README</a>는 GitHub 프로필 페이지 위쪽에 보이는 소개 글입니다. 사용자 이름과 똑같은 이름의 공개 저장소를 만들고, 루트에 내용이 있는 <code>README.md</code>를 두면 됩니다. 저장소를 만들 때 <code>Add README</code>를 켜면 편합니다. (<a href="https://docs.github.com/en/account-and-profile/how-tos/profile-customization/managing-your-profile-readme">Managing your profile README</a>) 2020년 7월 이전에 만든 저장소라면 프로필에 자동으로 보이지 않을 수 있고, 이때는 저장소에서 <code>Share to profile</code>을 누릅니다.</p>
+<h2 id="참고-자료">참고 자료</h2>
+<ul>
+<li><a href="https://docs.github.com/en/get-started/start-your-journey/what-is-github">About GitHub and Git</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/issues/tracking-your-work-with-issues/learning-about-issues/about-issues">About issues</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/pull-requests/reference/pull-requests">About pull requests</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue">Linking a pull request to an issue</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/about-projects">About Projects</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/discussions/collaborating-with-your-community-using-discussions/about-discussions">About discussions</a>, GitHub Docs, 2026-11-06 확인</li>
+<li><a href="https://docs.github.com/en/account-and-profile/how-tos/profile-customization/managing-your-profile-readme">Managing your profile README</a>, GitHub Docs, 2026-11-06 확인</li>
+</ul>
+<h2 id="용어-설명">용어 설명</h2>
+<h3 id="term-pr">PR</h3>
+<p>Pull Request(풀 리퀘스트). 작업 브랜치의 코드 변경을 다른 브랜치에 합쳐 달라고 제안하고 검토받는 GitHub 기능입니다. (<a href="https://docs.github.com/en/pull-requests/reference/pull-requests">About pull requests</a>)</p>
+<h3 id="term-readme">README</h3>
+<p>저장소나 프로필을 소개하는 <code>README.md</code> 문서입니다. 프로필 README는 사용자 이름과 같은 공개 저장소의 <code>README.md</code>가 프로필 위쪽에 표시됩니다. (<a href="https://docs.github.com/en/account-and-profile/how-tos/profile-customization/managing-your-profile-readme">Managing your profile README</a>)</p>
+]]></content:encoded></item></channel></rss>
